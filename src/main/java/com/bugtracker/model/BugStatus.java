@@ -1,7 +1,15 @@
 package com.bugtracker.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public enum BugStatus {
-    NEW,
-    FIXED,
-    REJECTED
+    NEW("новый"),
+    WAIT("ожидает"),
+    FIXED("исправлено"),
+    REJECTED("отклонено");
+
+    private final String name;
 }
