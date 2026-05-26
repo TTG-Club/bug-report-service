@@ -8,6 +8,8 @@
 - Spring Boot 3.5.0
 - PostgreSQL
 - Liquibase (миграции БД)
+- Spring Security + JWT (внешний auth-сервис)
+- AWS SDK v2 (S3-совместимое хранилище для скриншотов)
 - Bucket4j (rate limiting)
 - MapStruct (маппинг DTO)
 - Lombok
@@ -23,8 +25,18 @@
 ### Настройка БД
 
 ```sql
-CREATE DATABASE bug_report_db;
+CREATE DATABASE bug;
 ```
+
+### Переменные окружения
+
+| Переменная | Описание |
+|------------|----------|
+| `DB_USERNAME` | Имя пользователя PostgreSQL |
+| `DB_PASSWORD` | Пароль PostgreSQL |
+| `S3_BUCKET` | Имя S3-бакета для скриншотов |
+| `S3_ACCESS_KEY` | Access key для S3 |
+| `S3_SECRET_KEY` | Secret key для S3 |
 
 ### Запуск приложения
 
@@ -56,26 +68,43 @@ Content-Type: multipart/form-data
 
 ```
 GET /api/v1/bugs/{id}
+Authorization: Bearer <token>
 ```
+
+Требуется роль: `ADMIN` или `MODERATOR`
 
 ### Список баг-репортов (с фильтрацией и пагинацией)
 
 ```
 GET /api/v1/bugs?status=NEW&sourcePlatform=SITE_5E24&page=0&size=20
+Authorization: Bearer <token>
 ```
+
+Требуется роль: `ADMIN` или `MODERATOR`
 
 ### Обновление статуса
 
 ```
 PATCH /api/v1/bugs/{id}/status
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "status": "FIXED"
+  "status": "FIXED",
+  "comment": "Исправлено в релизе 2.1.0"
 }
 ```
 
+Требуется роль: `ADMIN` или `MODERATOR`
+
 Доступные статусы: `NEW`, `FIXED`, `REJECTED`
+
+## Безопасность
+
+- Эндпоинты GET и PATCH защищены JWT-авторизацией
+- Валидация токена происходит через внешний сервис `https://auth.api.ttg.club`
+- Доступ к защищённым эндпоинтам имеют только пользователи с ролями `ADMIN` или `MODERATOR`
+- Эндпоинт создания баг-репорта (POST) доступен без авторизации
 
 ## Rate Limiting
 
@@ -97,6 +126,9 @@ Content-Type: application/json
 ```
 src/main/java/com/bugtracker/
 ├── BugReportServiceApplication.java
+├── config/
+│   ├── S3Config.java
+│   └── SecurityConfig.java
 ├── controller/BugReportController.java
 ├── dto/
 │   ├── BugReportCreateRequest.java
@@ -114,6 +146,10 @@ src/main/java/com/bugtracker/
 │   └── SourcePlatform.java
 ├── ratelimit/RateLimiter.java
 ├── repository/BugReportRepository.java
+├── security/
+│   ├── AuthValidationResponse.java
+│   ├── ExternalAuthClient.java
+│   └── JwtAuthenticationFilter.java
 └── service/
     ├── BugReportService.java
     ├── FileStorageService.java
@@ -125,6 +161,7 @@ src/main/java/com/bugtracker/
 ## Конфигурация
 
 Основные настройки в `src/main/resources/application.yaml`:
-- `spring.datasource.*` — подключение к PostgreSQL
-- `app.upload.dir` — директория для скриншотов (по умолчанию `uploads/`)
+- `spring.datasource.*` — подключение к PostgreSQL (БД: `bug`)
+- `app.auth.*` — настройки внешнего auth-сервиса
+- `app.s3.*` — настройки S3-хранилища (Beget Cloud)
 - `spring.servlet.multipart.max-file-size` — макс. размер файла (10MB)
