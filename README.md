@@ -4,7 +4,7 @@
 
 ## Технологии
 
-- Java 25
+- Java 21
 - Spring Boot 3.5.0
 - PostgreSQL
 - Liquibase (миграции БД)

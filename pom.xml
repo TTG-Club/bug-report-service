@@ -11,14 +11,14 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.bugtracker</groupId>
-    <artifactId>bug-report-service</artifactId>
+    <groupId>club.ttg</groupId>
+    <artifactId>bug.report</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>bug-report-service</name>
     <description>Микросервис для учёта багов и работы с ними</description>
 
     <properties>
-        <java.version>25</java.version>
+        <java.version>21</java.version>
         <bucket4j.version>8.10.1</bucket4j.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <aws-sdk.version>2.31.1</aws-sdk.version>
@@ -128,8 +128,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>25</source>
-                    <target>25</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
