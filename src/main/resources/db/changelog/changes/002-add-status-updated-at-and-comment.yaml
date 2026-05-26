@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-add-status-updated-at-and-comment
+      author: bugtracker
+      changes:
+        - addColumn:
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: status_updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+              - column:
+                  name: status_comment
+                  type: VARCHAR(2000)
+                  constraints:
+                    nullable: true

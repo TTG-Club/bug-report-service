@@ -1,0 +1,70 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-bug-reports-table
+      author: bug-report-service
+      changes:
+        - createTable:
+            tableName: bug
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(2000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url
+                  type: varchar(1000)
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source_platform
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: screenshot_path
+                  type: varchar(500)
+              - column:
+                  name: user_login
+                  type: varchar(255)
+              - column:
+                  name: session_id
+                  type: varchar(255)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            indexName: idx_bug_reports_status
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            indexName: idx_bug_reports_source_platform
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: source_platform
+
+        - createIndex:
+            indexName: idx_bug_reports_created_at
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
