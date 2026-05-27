@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -34,18 +35,19 @@ public class FileStorageServiceImpl implements FileStorageService {
         String key = "screenshots/" + UUID.randomUUID() + extension;
 
         try {
+            byte[] content = file.getBytes();
             PutObjectRequest putRequest = PutObjectRequest.builder()
                     .bucket(s3Properties.bucket())
                     .key(key)
                     .contentType(file.getContentType())
-                    .contentLength(file.getSize())
+                    .contentLength((long) content.length)
                     .build();
 
-            s3Client.putObject(putRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            s3Client.putObject(putRequest, RequestBody.fromBytes(content));
 
             log.info("Файл загружен в S3: {}", key);
             return key;
-        } catch (IOException e) {
+        } catch (SdkException | IOException e) {
             throw new FileStorageException("Не удалось загрузить файл в S3: " + originalFilename, e);
         }
     }
