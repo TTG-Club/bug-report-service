@@ -48,7 +48,7 @@ public class BugReportResponse {
     /**
      * URL скриншота.
      */
-    @Schema(description = "URL скриншота в S3-хранилище", example = "https://s3.ru1.storage.beget.cloud/bucket/screenshots/abc123.png")
+    @Schema(description = "URL скриншота", example = "https://bug-report.api.ttg.club/api/v1/bugs/550e8400-e29b-41d4-a716-446655440000/screenshot")
     private String screenshotUrl;
 
     /**

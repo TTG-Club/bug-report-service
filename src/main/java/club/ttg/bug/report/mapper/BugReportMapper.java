@@ -14,6 +14,8 @@ import org.springframework.util.StringUtils;
 @Mapper(componentModel = "spring")
 public interface BugReportMapper {
 
+    String PUBLIC_API_URL = "https://bug-report.api.ttg.club";
+
     /**
      * Преобразование сущности в DTO ответа.
      */
@@ -25,7 +27,7 @@ public interface BugReportMapper {
             return null;
         }
 
-        return "/api/v1/bugs/" + bugReport.getId() + "/screenshot";
+        return PUBLIC_API_URL + "/api/v1/bugs/" + bugReport.getId() + "/screenshot";
     }
 
     /**
