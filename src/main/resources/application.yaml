@@ -37,8 +37,8 @@ app:
   jwt:
     secret: ${JWT_SECRET}
   s3:
-    endpoint: https://s3.ru1.storage.beget.cloud
-    region: ru-1
+    endpoint: ${SPRING_CLOUD_AWS_S3_ENDPOINT}
+    region: ${SPRING_CLOUD_AWS_S3_REGION}
     bucket: ${SPRING_CLOUD_AWS_S3_BUCKET}
     access-key: ${SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY}
     secret-key: ${SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY}
