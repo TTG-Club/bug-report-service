@@ -47,4 +47,11 @@ public class BugReportCreateRequest {
      */
     @Schema(description = "Идентификатор сессии (если не авторизован)", example = "sess_abc123def456")
     private String sessionId;
+
+    /**
+     * Выделенный текст на странице.
+     */
+    @Size(max = 5000, message = "Выделенный текст не должен превышать 5000 символов")
+    @Schema(description = "Выделенный текст на странице", example = "Текст, который пользователь выделил при создании баг-репорта")
+    private String selectedText;
 }

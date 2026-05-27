@@ -80,4 +80,10 @@ public class BugReportResponse {
      */
     @Schema(description = "Комментарий при последнем изменении статуса", example = "Исправлено в релизе 2.1.0")
     private String statusComment;
+
+    /**
+     * Выделенный текст на странице.
+     */
+    @Schema(description = "Выделенный текст на странице", example = "Текст, который пользователь выделил при создании баг-репорта")
+    private String selectedText;
 }

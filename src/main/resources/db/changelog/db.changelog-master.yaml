@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/changes/001-create-bug-reports-table.yaml
   - include:
       file: db/changelog/changes/002-add-status-updated-at-and-comment.yaml
+  - include:
+      file: db/changelog/changes/003-add-selected-text.yaml

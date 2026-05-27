@@ -86,6 +86,12 @@ public class BugReport {
     @Column(name = "status_comment", length = 2000)
     private String statusComment;
 
+    /**
+     * Выделенный текст на странице.
+     */
+    @Column(name = "selected_text", length = 5000)
+    private String selectedText;
+
     @PrePersist
     public void prePersist() {
         if (status == null) {

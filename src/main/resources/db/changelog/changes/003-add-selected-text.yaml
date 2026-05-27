@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: developer
+      changes:
+        - addColumn:
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: selected_text
+                  type: varchar(5000)
+                  constraints:
+                    nullable: true
