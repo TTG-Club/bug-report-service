@@ -32,8 +32,9 @@ CREATE DATABASE bug;
 
 | Переменная | Описание |
 |------------|----------|
-| `DB_USERNAME` | Имя пользователя PostgreSQL |
-| `DB_PASSWORD` | Пароль PostgreSQL |
+| `SPRING_DATASOURCE_URL` | JDBC URL PostgreSQL, например `jdbc:postgresql://localhost:5432/bug` |
+| `SPRING_DATASOURCE_USERNAME` | Имя пользователя PostgreSQL |
+| `SPRING_DATASOURCE_PASSWORD` | Пароль PostgreSQL |
 | `JWT_SECRET` | Секретный ключ для проверки JWT-подписи HS256 |
 | `S3_BUCKET` | Имя S3-бакета для скриншотов |
 | `S3_ACCESS_KEY` | Access key для S3 |
