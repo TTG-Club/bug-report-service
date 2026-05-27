@@ -1,8 +1,8 @@
 package club.ttg.bug.report.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.ConfigurableEnvironment;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -16,17 +16,10 @@ import java.net.URI;
 @Configuration
 public class S3Config {
 
-    @Value("${app.s3.endpoint}")
-    private String endpoint;
-
-    @Value("${app.s3.region}")
-    private String region;
-
-    @Value("${app.s3.access-key}")
-    private String accessKey;
-
-    @Value("${app.s3.secret-key}")
-    private String secretKey;
+    @Bean
+    public S3Properties s3Properties(ConfigurableEnvironment environment) {
+        return S3Properties.from(environment);
+    }
 
     /**
      * Создает клиент S3 с настройками для S3-совместимого хранилища.
@@ -34,12 +27,12 @@ public class S3Config {
      * @return настроенный экземпляр S3Client
      */
     @Bean
-    public S3Client s3Client() {
+    public S3Client s3Client(S3Properties properties) {
         return S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(Region.of(region))
+                .endpointOverride(URI.create(properties.endpoint()))
+                .region(Region.of(properties.region()))
                 .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)
+                        AwsBasicCredentials.create(properties.accessKey(), properties.secretKey())
                 ))
                 .forcePathStyle(true)
                 .build();

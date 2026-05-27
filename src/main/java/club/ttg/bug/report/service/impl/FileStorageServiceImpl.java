@@ -1,10 +1,10 @@
 package club.ttg.bug.report.service.impl;
 
+import club.ttg.bug.report.config.S3Properties;
 import club.ttg.bug.report.exception.FileStorageException;
 import club.ttg.bug.report.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,12 +25,7 @@ import java.util.UUID;
 public class FileStorageServiceImpl implements FileStorageService {
 
     private final S3Client s3Client;
-
-    @Value("${app.s3.bucket}")
-    private String bucket;
-
-    @Value("${app.s3.endpoint}")
-    private String endpoint;
+    private final S3Properties s3Properties;
 
     @Override
     public String store(MultipartFile file) {
@@ -40,7 +35,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         try {
             PutObjectRequest putRequest = PutObjectRequest.builder()
-                    .bucket(bucket)
+                    .bucket(s3Properties.bucket())
                     .key(key)
                     .contentType(file.getContentType())
                     .contentLength(file.getSize())
@@ -57,7 +52,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     public String getFileUrl(String key) {
-        return endpoint + "/" + bucket + "/" + key;
+        return s3Properties.endpoint() + "/" + s3Properties.bucket() + "/" + key;
     }
 
     private String getFileExtension(String filename) {
