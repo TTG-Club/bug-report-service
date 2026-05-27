@@ -110,12 +110,10 @@ public class BugReportController {
         return ResponseEntity.ok(bugReportService.getById(id));
     }
 
-    @Operation(summary = "Получение скриншота для бага", description = "Возвращает скриншот")
+    @Operation(summary = "Получение скриншота для бага", description = "Возвращает скриншот. Доступен без авторизации.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Screenshot found"),
-            @ApiResponse(responseCode = "404", description = "Bug report or screenshot not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "403", description = "Forbidden")
+            @ApiResponse(responseCode = "200", description = "Скриншот найден"),
+            @ApiResponse(responseCode = "404", description = "Баг-репорт или скриншот не найден")
     })
     @GetMapping("/{id}/screenshot")
     public ResponseEntity<byte[]> getScreenshot(
