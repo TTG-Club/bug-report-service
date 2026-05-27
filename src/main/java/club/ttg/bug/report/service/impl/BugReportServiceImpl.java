@@ -36,8 +36,9 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional
-    public BugReportResponse create(BugReportCreateRequest request, MultipartFile screenshot) {
+    public BugReportResponse create(BugReportCreateRequest request, MultipartFile screenshot, String userLogin) {
         BugReport bugReport = bugReportMapper.toEntity(request);
+        bugReport.setUserLogin(userLogin);
 
         if (screenshot != null && !screenshot.isEmpty()) {
             String key = fileStorageService.store(screenshot);

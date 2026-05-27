@@ -37,12 +37,6 @@ public class BugReportCreateRequest {
     private SourcePlatform sourcePlatform;
 
     /**
-     * Логин пользователя (если авторизован).
-     */
-    @Schema(description = "Логин пользователя (если авторизован)", example = "user123")
-    private String userLogin;
-
-    /**
      * Идентификатор сессии (если не авторизован).
      */
     @Schema(description = "Идентификатор сессии (если не авторизован)", example = "sess_abc123def456")

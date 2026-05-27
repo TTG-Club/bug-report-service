@@ -24,6 +24,7 @@ public interface BugReportMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "userLogin", ignore = true)
     @Mapping(target = "screenshotPath", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "statusUpdatedAt", ignore = true)

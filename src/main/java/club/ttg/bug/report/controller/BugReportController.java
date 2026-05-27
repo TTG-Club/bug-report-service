@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,11 +60,13 @@ public class BugReportController {
     public ResponseEntity<BugReportResponse> create(
             @Valid @RequestPart("request") BugReportCreateRequest request,
             @Parameter(description = "Скриншот бага (до 10MB)")
-            @RequestPart(value = "screenshot", required = false) MultipartFile screenshot) {
+            @RequestPart(value = "screenshot", required = false) MultipartFile screenshot,
+            Authentication authentication) {
 
         // Определяем ключ для rate limiting и тип пользователя
-        boolean authenticated = request.getUserLogin() != null && !request.getUserLogin().isBlank();
-        String rateLimitKey = authenticated ? request.getUserLogin() : request.getSessionId();
+        String userLogin = resolveUserLogin(authentication);
+        boolean authenticated = userLogin != null;
+        String rateLimitKey = authenticated ? userLogin : request.getSessionId();
 
         if (rateLimitKey == null || rateLimitKey.isBlank()) {
             rateLimitKey = "anonymous";
@@ -71,8 +74,17 @@ public class BugReportController {
 
         rateLimiter.checkRateLimit(rateLimitKey, authenticated);
 
-        BugReportResponse response = bugReportService.create(request, screenshot);
+        BugReportResponse response = bugReportService.create(request, screenshot, userLogin);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    private String resolveUserLogin(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        String name = authentication.getName();
+        return name == null || name.isBlank() ? null : name;
     }
 
     /**

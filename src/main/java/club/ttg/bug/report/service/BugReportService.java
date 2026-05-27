@@ -23,7 +23,7 @@ public interface BugReportService {
      * @param screenshot скриншот (может быть null)
      * @return созданный баг-репорт
      */
-    BugReportResponse create(BugReportCreateRequest request, MultipartFile screenshot);
+    BugReportResponse create(BugReportCreateRequest request, MultipartFile screenshot, String userLogin);
 
     /**
      * Получение баг-репорта по ID.
