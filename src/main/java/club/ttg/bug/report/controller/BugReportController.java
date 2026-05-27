@@ -1,5 +1,6 @@
 package club.ttg.bug.report.controller;
 
+import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
@@ -117,7 +118,6 @@ public class BugReportController {
             @ApiResponse(responseCode = "403", description = "Forbidden")
     })
     @GetMapping("/{id}/screenshot")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<byte[]> getScreenshot(
             @Parameter(description = "Bug report UUID") @PathVariable UUID id) {
         StoredFile screenshot = bugReportService.getScreenshot(id);
@@ -186,5 +186,25 @@ public class BugReportController {
                 .map(s -> new BugStatusResponse(s.name(), s.getName()))
                 .toList();
         return ResponseEntity.ok(statuses);
+    }
+
+    /**
+     * Получение количества багов для текущего пользователя с группировкой по статусу.
+     *
+     * @param authentication данные аутентификации
+     * @return список количества багов по статусам
+     */
+    @Operation(summary = "Количество багов по статусу", description = "Возвращает количество багов текущего пользователя с группировкой по статусу. Требуется авторизация.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Количество багов по статусам"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован")
+    })
+    @GetMapping("/my/count-by-status")
+    public ResponseEntity<List<BugCountByStatusResponse>> countByStatusForCurrentUser(Authentication authentication) {
+        String userLogin = resolveUserLogin(authentication);
+        if (userLogin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(bugReportService.countByStatusForUser(userLogin));
     }
 }

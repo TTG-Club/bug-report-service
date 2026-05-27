@@ -1,5 +1,6 @@
 package club.ttg.bug.report.service.impl;
 
+import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -98,12 +100,21 @@ public class BugReportServiceImpl implements BugReportService {
     @Transactional(readOnly = true)
     public StoredFile getScreenshot(UUID id) {
         BugReport bugReport = bugReportRepository.findById(id)
-                .orElseThrow(() -> new BugReportNotFoundException("Р‘Р°Рі-СЂРµРїРѕСЂС‚ РЅРµ РЅР°Р№РґРµРЅ: " + id));
+                .orElseThrow(() -> new BugReportNotFoundException("Р'Р°Рі-СЂРµРїРѕСЂС‚ РЅРµ РЅР°Р№РґРµРЅ: " + id));
 
         if (!StringUtils.hasText(bugReport.getScreenshotPath())) {
             throw new BugReportNotFoundException("РЎРєСЂРёРЅС€РѕС‚ РЅРµ РЅР°Р№РґРµРЅ: " + id);
         }
 
         return fileStorageService.get(bugReport.getScreenshotPath());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BugCountByStatusResponse> countByStatusForUser(String userLogin) {
+        List<Object[]> results = bugReportRepository.countByStatusForUser(userLogin);
+        return results.stream()
+                .map(row -> new BugCountByStatusResponse((BugStatus) row[0], (Long) row[1]))
+                .toList();
     }
 }

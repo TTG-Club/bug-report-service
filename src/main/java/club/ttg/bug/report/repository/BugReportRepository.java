@@ -6,8 +6,11 @@ import club.ttg.bug.report.model.SourcePlatform;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,4 +33,10 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
      * Поиск баг-репортов по статусу и платформе.
      */
     Page<BugReport> findByStatusAndSourcePlatform(BugStatus status, SourcePlatform sourcePlatform, Pageable pageable);
+
+    /**
+     * Подсчёт количества багов по статусу для конкретного пользователя.
+     */
+    @Query("SELECT b.status, COUNT(b) FROM BugReport b WHERE b.userLogin = :userLogin GROUP BY b.status")
+    List<Object[]> countByStatusForUser(@Param("userLogin") String userLogin);
 }

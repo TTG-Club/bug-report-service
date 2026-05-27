@@ -1,5 +1,6 @@
 package club.ttg.bug.report.service;
 
+import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -53,4 +55,12 @@ public interface BugReportService {
     BugReportResponse updateStatus(UUID id, BugReportUpdateStatusRequest request);
 
     StoredFile getScreenshot(UUID id);
+
+    /**
+     * Получение количества багов для пользователя с группировкой по статусу.
+     *
+     * @param userLogin логин пользователя
+     * @return список количества багов по статусам
+     */
+    List<BugCountByStatusResponse> countByStatusForUser(String userLogin);
 }
