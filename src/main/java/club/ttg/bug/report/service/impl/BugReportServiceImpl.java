@@ -11,8 +11,10 @@ import club.ttg.bug.report.model.SourcePlatform;
 import club.ttg.bug.report.repository.BugReportRepository;
 import club.ttg.bug.report.service.BugReportService;
 import club.ttg.bug.report.service.FileStorageService;
+import club.ttg.bug.report.service.StoredFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,8 +44,7 @@ public class BugReportServiceImpl implements BugReportService {
 
         if (screenshot != null && !screenshot.isEmpty()) {
             String key = fileStorageService.store(screenshot);
-            String screenshotUrl = fileStorageService.getFileUrl(key);
-            bugReport.setScreenshotPath(screenshotUrl);
+            bugReport.setScreenshotPath(key);
         }
 
         BugReport saved = bugReportRepository.save(bugReport);
@@ -91,5 +92,18 @@ public class BugReportServiceImpl implements BugReportService {
         log.info("Обновлён статус баг-репорта: id={}, newStatus={}", id, request.getStatus());
 
         return bugReportMapper.toResponse(updated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StoredFile getScreenshot(UUID id) {
+        BugReport bugReport = bugReportRepository.findById(id)
+                .orElseThrow(() -> new BugReportNotFoundException("Р‘Р°Рі-СЂРµРїРѕСЂС‚ РЅРµ РЅР°Р№РґРµРЅ: " + id));
+
+        if (!StringUtils.hasText(bugReport.getScreenshotPath())) {
+            throw new BugReportNotFoundException("РЎРєСЂРёРЅС€РѕС‚ РЅРµ РЅР°Р№РґРµРЅ: " + id);
+        }
+
+        return fileStorageService.get(bugReport.getScreenshotPath());
     }
 }

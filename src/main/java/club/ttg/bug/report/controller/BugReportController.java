@@ -8,6 +8,7 @@ import club.ttg.bug.report.model.BugStatus;
 import club.ttg.bug.report.model.SourcePlatform;
 import club.ttg.bug.report.ratelimit.RateLimiter;
 import club.ttg.bug.report.service.BugReportService;
+import club.ttg.bug.report.service.StoredFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -105,6 +107,24 @@ public class BugReportController {
     public ResponseEntity<BugReportResponse> getById(
             @Parameter(description = "UUID баг-репорта") @PathVariable UUID id) {
         return ResponseEntity.ok(bugReportService.getById(id));
+    }
+
+    @Operation(summary = "Получение скриншота для бага", description = "Возвращает скриншот")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Screenshot found"),
+            @ApiResponse(responseCode = "404", description = "Bug report or screenshot not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    @GetMapping("/{id}/screenshot")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public ResponseEntity<byte[]> getScreenshot(
+            @Parameter(description = "Bug report UUID") @PathVariable UUID id) {
+        StoredFile screenshot = bugReportService.getScreenshot(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(screenshot.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(screenshot.content());
     }
 
     /**

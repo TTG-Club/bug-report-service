@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     }
 
+    @ExceptionHandler(StoredFileNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleStoredFileNotFound(StoredFileNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<Map<String, Object>> handleFileStorage(FileStorageException ex) {
         log.error("Ошибка хранения файла", ex);

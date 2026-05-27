@@ -51,4 +51,6 @@ public interface BugReportService {
      * @return обновлённый баг-репорт
      */
     BugReportResponse updateStatus(UUID id, BugReportUpdateStatusRequest request);
+
+    StoredFile getScreenshot(UUID id);
 }

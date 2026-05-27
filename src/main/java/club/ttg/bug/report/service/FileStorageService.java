@@ -16,10 +16,10 @@ public interface FileStorageService {
     String store(MultipartFile file);
 
     /**
-     * Получение публичного URL файла в S3.
+     * Получение файла из S3.
      *
      * @param key ключ файла в бакете
-     * @return публичный URL файла
+     * @return содержимое файла
      */
-    String getFileUrl(String key);
+    StoredFile get(String key);
 }

@@ -5,6 +5,7 @@ import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.model.BugReport;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.util.StringUtils;
 
 /**
  * Маппер для преобразования между сущностью BugReport и DTO.
@@ -16,8 +17,16 @@ public interface BugReportMapper {
     /**
      * Преобразование сущности в DTO ответа.
      */
-    @Mapping(target = "screenshotUrl", source = "screenshotPath")
+    @Mapping(target = "screenshotUrl", expression = "java(toScreenshotUrl(bugReport))")
     BugReportResponse toResponse(BugReport bugReport);
+
+    default String toScreenshotUrl(BugReport bugReport) {
+        if (bugReport == null || !StringUtils.hasText(bugReport.getScreenshotPath())) {
+            return null;
+        }
+
+        return "/api/v1/bugs/" + bugReport.getId() + "/screenshot";
+    }
 
     /**
      * Преобразование запроса на создание в сущность.
