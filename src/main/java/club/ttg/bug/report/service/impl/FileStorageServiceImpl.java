@@ -12,6 +12,7 @@ import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -47,6 +48,16 @@ public class FileStorageServiceImpl implements FileStorageService {
 
             log.info("Файл загружен в S3: {}", key);
             return key;
+        } catch (S3Exception e) {
+            log.error(
+                    "S3 upload failed for file '{}': status={}, requestId={}, errorCode={}, errorMessage={}",
+                    originalFilename,
+                    e.statusCode(),
+                    e.requestId(),
+                    e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null,
+                    e.awsErrorDetails() != null ? e.awsErrorDetails().errorMessage() : null
+            );
+            throw new FileStorageException("S3 upload failed for file: " + originalFilename, e);
         } catch (SdkException | IOException e) {
             throw new FileStorageException("Не удалось загрузить файл в S3: " + originalFilename, e);
         }
