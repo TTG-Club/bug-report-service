@@ -34,9 +34,8 @@ server:
 
 # Настройки приложения
 app:
-  auth:
-    url: https://auth.api.ttg.club
-    validate-endpoint: /api/v1/auth/validate
+  jwt:
+    secret: ${JWT_SECRET}
   s3:
     endpoint: https://s3.ru1.storage.beget.cloud
     region: ru-1

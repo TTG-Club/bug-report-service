@@ -20,8 +20,8 @@ import java.util.List;
 /**
  * Фильтр аутентификации по JWT-токену.
  * <p>
- * Извлекает токен из заголовка Authorization, валидирует его через внешний сервис
- * авторизации и устанавливает контекст безопасности Spring Security.
+ * Извлекает токен из заголовка Authorization, валидирует его локально
+ * и устанавливает контекст безопасности Spring Security.
  * </p>
  */
 @Slf4j
@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
-    private final ExternalAuthClient externalAuthClient;
+    private final JwtTokenValidator jwtTokenValidator;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,21 +43,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
             String token = authHeader.substring(BEARER_PREFIX.length());
 
-            externalAuthClient.validateToken(token).ifPresent(authResponse -> {
-                List<SimpleGrantedAuthority> authorities = authResponse.getRoles().stream()
+            jwtTokenValidator.validateToken(token).ifPresent(authenticatedUser -> {
+                List<SimpleGrantedAuthority> authorities = authenticatedUser.roles().stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                         .toList();
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                authResponse.getUsername(),
+                                authenticatedUser.username(),
                                 null,
                                 authorities
                         );
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.debug("Пользователь '{}' аутентифицирован с ролями: {}",
-                        authResponse.getUsername(), authResponse.getRoles());
+                        authenticatedUser.username(), authenticatedUser.roles());
             });
         }
 

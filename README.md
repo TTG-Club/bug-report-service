@@ -8,7 +8,7 @@
 - Spring Boot 3.5.0
 - PostgreSQL
 - Liquibase (миграции БД)
-- Spring Security + JWT (внешний auth-сервис)
+- Spring Security + JWT (локальная валидация подписи)
 - AWS SDK v2 (S3-совместимое хранилище для скриншотов)
 - Bucket4j (rate limiting)
 - MapStruct (маппинг DTO)
@@ -34,6 +34,7 @@ CREATE DATABASE bug;
 |------------|----------|
 | `DB_USERNAME` | Имя пользователя PostgreSQL |
 | `DB_PASSWORD` | Пароль PostgreSQL |
+| `JWT_SECRET` | Секретный ключ для проверки JWT-подписи HS256 |
 | `S3_BUCKET` | Имя S3-бакета для скриншотов |
 | `S3_ACCESS_KEY` | Access key для S3 |
 | `S3_SECRET_KEY` | Secret key для S3 |
@@ -102,7 +103,7 @@ Content-Type: application/json
 ## Безопасность
 
 - Эндпоинты GET и PATCH защищены JWT-авторизацией
-- Валидация токена происходит через внешний сервис `https://auth.api.ttg.club`
+- Валидация токена происходит локально по подписи HS256 с секретом из `JWT_SECRET`
 - Доступ к защищённым эндпоинтам имеют только пользователи с ролями `ADMIN` или `MODERATOR`
 - Эндпоинт создания баг-репорта (POST) доступен без авторизации
 
@@ -147,9 +148,9 @@ src/main/java/com/bugtracker/
 ├── ratelimit/RateLimiter.java
 ├── repository/BugReportRepository.java
 ├── security/
-│   ├── AuthValidationResponse.java
-│   ├── ExternalAuthClient.java
-│   └── JwtAuthenticationFilter.java
+│   ├── JwtAuthenticatedUser.java
+│   ├── JwtAuthenticationFilter.java
+│   └── JwtTokenValidator.java
 └── service/
     ├── BugReportService.java
     ├── FileStorageService.java
@@ -162,6 +163,6 @@ src/main/java/com/bugtracker/
 
 Основные настройки в `src/main/resources/application.yaml`:
 - `spring.datasource.*` — подключение к PostgreSQL (БД: `bug`)
-- `app.auth.*` — настройки внешнего auth-сервиса
+- `app.jwt.secret` — секретный ключ для проверки JWT-подписи
 - `app.s3.*` — настройки S3-хранилища (Beget Cloud)
 - `spring.servlet.multipart.max-file-size` — макс. размер файла (10MB)
