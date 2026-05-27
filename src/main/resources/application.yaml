@@ -39,6 +39,6 @@ app:
   s3:
     endpoint: https://s3.ru1.storage.beget.cloud
     region: ru-1
-    bucket: ${S3_BUCKET}
-    access-key: ${S3_ACCESS_KEY}
-    secret-key: ${S3_SECRET_KEY}
+    bucket: ${SPRING_CLOUD_AWS_S3_BUCKET}
+    access-key: ${SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY}
+    secret-key: ${SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY}
