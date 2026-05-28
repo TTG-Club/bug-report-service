@@ -4,6 +4,7 @@ import club.ttg.bug.report.config.S3Properties;
 import club.ttg.bug.report.exception.FileStorageException;
 import club.ttg.bug.report.exception.StoredFileNotFoundException;
 import club.ttg.bug.report.service.FileStorageService;
+import club.ttg.bug.report.service.ImageConversionService;
 import club.ttg.bug.report.service.StoredFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,21 +35,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileStorageServiceImpl implements FileStorageService {
 
+    private static final String WEBP_CONTENT_TYPE = "image/webp";
+
     private final S3Client s3Client;
     private final S3Properties s3Properties;
+    private final ImageConversionService imageConversionService;
 
     @Override
     public String store(MultipartFile file) {
         String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        String extension = getFileExtension(originalFilename);
-        String key = "screenshots/" + UUID.randomUUID() + extension;
 
         try {
             byte[] content = file.getBytes();
+            String contentType = file.getContentType();
+            String key;
+
+            if (imageConversionService.isConvertibleImage(contentType)) {
+                content = imageConversionService.convertToWebp(content);
+                contentType = WEBP_CONTENT_TYPE;
+                key = "screenshots/" + UUID.randomUUID() + ".webp";
+                log.info("Скриншот '{}' конвертирован в WebP", originalFilename);
+            } else {
+                String extension = getFileExtension(originalFilename);
+                key = "screenshots/" + UUID.randomUUID() + extension;
+            }
+
             PutObjectRequest putRequest = PutObjectRequest.builder()
                     .bucket(s3Properties.bucket())
                     .key(key)
-                    .contentType(file.getContentType())
+                    .contentType(contentType)
                     .contentLength((long) content.length)
                     .build();
 
