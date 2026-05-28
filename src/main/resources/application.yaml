@@ -33,6 +33,8 @@ server:
 
 # Настройки приложения
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
   jwt:
     secret: ${JWT_SECRET}
   s3:
