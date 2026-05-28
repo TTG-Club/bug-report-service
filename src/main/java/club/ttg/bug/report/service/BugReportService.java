@@ -3,6 +3,7 @@ package club.ttg.bug.report.service;
 import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
+import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
 import club.ttg.bug.report.model.BugStatus;
 import club.ttg.bug.report.model.SourcePlatform;
@@ -63,4 +64,11 @@ public interface BugReportService {
      * @return список количества багов по статусам
      */
     List<BugCountByStatusResponse> countByStatusForUser(String userLogin);
+
+    /**
+     * Получение общей статистики по баг-репортам.
+     *
+     * @return статистика: общее количество, количество решённых, топ-10 пользователей
+     */
+    BugReportStatsResponse getStats();
 }

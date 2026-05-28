@@ -3,6 +3,7 @@ package club.ttg.bug.report.controller;
 import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
+import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
 import club.ttg.bug.report.dto.BugStatusResponse;
 import club.ttg.bug.report.model.BugStatus;
@@ -204,5 +205,17 @@ public class BugReportController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(bugReportService.countByStatusForUser(userLogin));
+    }
+
+    /**
+     * Получение общей статистики по баг-репортам.
+     *
+     * @return статистика: общее количество, решённые, топ-10 пользователей
+     */
+    @Operation(summary = "Статистика по баг-репортам", description = "Возвращает общее количество багов, количество решённых и топ-10 пользователей по решённым багам. Доступен без авторизации.")
+    @ApiResponse(responseCode = "200", description = "Статистика получена")
+    @GetMapping("/stats")
+    public ResponseEntity<BugReportStatsResponse> getStats() {
+        return ResponseEntity.ok(bugReportService.getStats());
     }
 }

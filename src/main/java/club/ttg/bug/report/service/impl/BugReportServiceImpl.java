@@ -3,7 +3,9 @@ package club.ttg.bug.report.service.impl;
 import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
+import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
+import club.ttg.bug.report.dto.UserFixedCountResponse;
 import club.ttg.bug.report.exception.BugReportNotFoundException;
 import club.ttg.bug.report.mapper.BugReportMapper;
 import club.ttg.bug.report.model.BugReport;
@@ -15,6 +17,7 @@ import club.ttg.bug.report.service.FileStorageService;
 import club.ttg.bug.report.service.StoredFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.util.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -116,5 +119,19 @@ public class BugReportServiceImpl implements BugReportService {
         return results.stream()
                 .map(row -> new BugCountByStatusResponse((BugStatus) row[0], (Long) row[1]))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BugReportStatsResponse getStats() {
+        long totalCount = bugReportRepository.count();
+        long fixedCount = bugReportRepository.countByStatusFixed();
+
+        List<Object[]> topFixersRaw = bugReportRepository.findTop10UsersByFixedBugs(PageRequest.of(0, 10));
+        List<UserFixedCountResponse> topFixers = topFixersRaw.stream()
+                .map(row -> new UserFixedCountResponse((String) row[0], (Long) row[1]))
+                .toList();
+
+        return new BugReportStatsResponse(totalCount, fixedCount, topFixers);
     }
 }

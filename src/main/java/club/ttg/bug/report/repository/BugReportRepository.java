@@ -39,4 +39,17 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
      */
     @Query("SELECT b.status, COUNT(b) FROM BugReport b WHERE b.userLogin = :userLogin GROUP BY b.status")
     List<Object[]> countByStatusForUser(@Param("userLogin") String userLogin);
+
+    /**
+     * Подсчёт количества решённых (FIXED) баг-репортов.
+     */
+    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.status = 'FIXED'")
+    long countByStatusFixed();
+
+    /**
+     * Топ-10 зарегистрированных пользователей по количеству решённых багов.
+     * Возвращает только пользователей с непустым логином (зарегистрированных).
+     */
+    @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.userLogin IS NOT NULL GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
+    List<Object[]> findTop10UsersByFixedBugs(Pageable pageable);
 }
