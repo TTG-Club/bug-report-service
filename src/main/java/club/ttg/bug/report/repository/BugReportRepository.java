@@ -52,4 +52,9 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
      */
     @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.userLogin IS NOT NULL GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
     List<Object[]> findTop10UsersByFixedBugs(Pageable pageable);
+
+    /**
+     * Поиск баг-репортов по логину пользователя с пагинацией.
+     */
+    Page<BugReport> findByUserLogin(String userLogin, Pageable pageable);
 }

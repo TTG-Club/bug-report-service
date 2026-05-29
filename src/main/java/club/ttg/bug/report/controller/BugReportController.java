@@ -188,6 +188,29 @@ public class BugReportController {
     }
 
     /**
+     * Получение всех баг-репортов текущего пользователя.
+     *
+     * @param authentication данные аутентификации
+     * @param pageable параметры пагинации
+     * @return страница баг-репортов пользователя
+     */
+    @Operation(summary = "Мои баг-репорты", description = "Возвращает все баг-репорты текущего авторизованного пользователя с пагинацией. Требуется авторизация.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Список баг-репортов пользователя"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован")
+    })
+    @GetMapping("/my")
+    public ResponseEntity<Page<BugReportResponse>> getMyBugs(
+            Authentication authentication,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        String userLogin = resolveUserLogin(authentication);
+        if (userLogin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(bugReportService.getByUser(userLogin, pageable));
+    }
+
+    /**
      * Получение количества багов для текущего пользователя с группировкой по статусу.
      *
      * @param authentication данные аутентификации

@@ -66,6 +66,15 @@ public interface BugReportService {
     List<BugCountByStatusResponse> countByStatusForUser(String userLogin);
 
     /**
+     * Получение всех баг-репортов текущего пользователя с пагинацией.
+     *
+     * @param userLogin логин пользователя
+     * @param pageable параметры пагинации
+     * @return страница баг-репортов пользователя
+     */
+    Page<BugReportResponse> getByUser(String userLogin, Pageable pageable);
+
+    /**
      * Получение общей статистики по баг-репортам.
      *
      * @return статистика: общее количество, количество решённых, топ-10 пользователей

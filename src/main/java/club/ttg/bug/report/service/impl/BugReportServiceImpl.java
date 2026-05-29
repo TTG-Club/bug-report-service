@@ -123,6 +123,13 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<BugReportResponse> getByUser(String userLogin, Pageable pageable) {
+        Page<BugReport> page = bugReportRepository.findByUserLogin(userLogin, pageable);
+        return page.map(bugReportMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public BugReportStatsResponse getStats() {
         long totalCount = bugReportRepository.count();
         long fixedCount = bugReportRepository.countByStatusFixed();
