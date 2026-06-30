@@ -40,5 +40,6 @@ public interface BugReportMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "statusUpdatedAt", ignore = true)
     @Mapping(target = "statusComment", ignore = true)
+    @Mapping(target = "statusUpdatedBy", ignore = true)
     BugReport toEntity(BugReportCreateRequest request);
 }

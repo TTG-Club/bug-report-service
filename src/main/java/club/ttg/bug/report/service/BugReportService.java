@@ -51,9 +51,10 @@ public interface BugReportService {
      *
      * @param id идентификатор бага
      * @param request новый статус
+     * @param updatedBy логин пользователя, изменившего статус
      * @return обновлённый баг-репорт
      */
-    BugReportResponse updateStatus(UUID id, BugReportUpdateStatusRequest request);
+    BugReportResponse updateStatus(UUID id, BugReportUpdateStatusRequest request, String updatedBy);
 
     StoredFile getScreenshot(UUID id);
 

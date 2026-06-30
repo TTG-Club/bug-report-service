@@ -168,8 +168,9 @@ public class BugReportController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<BugReportResponse> updateStatus(
             @Parameter(description = "UUID баг-репорта") @PathVariable UUID id,
-            @Valid @RequestBody BugReportUpdateStatusRequest request) {
-        return ResponseEntity.ok(bugReportService.updateStatus(id, request));
+            @Valid @RequestBody BugReportUpdateStatusRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(bugReportService.updateStatus(id, request, resolveUserLogin(authentication)));
     }
 
     /**

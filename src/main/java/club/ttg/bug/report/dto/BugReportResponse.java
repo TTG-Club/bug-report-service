@@ -82,6 +82,12 @@ public class BugReportResponse {
     private String statusComment;
 
     /**
+     * Логин пользователя, который последним изменил статус.
+     */
+    @Schema(description = "Логин пользователя, который последним изменил статус", example = "moderator123")
+    private String statusUpdatedBy;
+
+    /**
      * Выделенный текст на странице.
      */
     @Schema(description = "Выделенный текст на странице", example = "Текст, который пользователь выделил при создании баг-репорта")

@@ -86,15 +86,17 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional
-    public BugReportResponse updateStatus(UUID id, BugReportUpdateStatusRequest request) {
+    public BugReportResponse updateStatus(UUID id, BugReportUpdateStatusRequest request, String updatedBy) {
         BugReport bugReport = bugReportRepository.findById(id)
                 .orElseThrow(() -> new BugReportNotFoundException("Баг-репорт не найден: " + id));
 
         bugReport.setStatus(request.getStatus());
         bugReport.setStatusUpdatedAt(LocalDateTime.now());
         bugReport.setStatusComment(request.getComment());
+        bugReport.setStatusUpdatedBy(updatedBy);
         BugReport updated = bugReportRepository.save(bugReport);
-        log.info("Обновлён статус баг-репорта: id={}, newStatus={}", id, request.getStatus());
+        log.info("Обновлён статус баг-репорта: id={}, newStatus={}, updatedBy={}",
+                id, request.getStatus(), updatedBy);
 
         return bugReportMapper.toResponse(updated);
     }

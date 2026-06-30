@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-add-status-updated-at-and-comment.yaml
   - include:
       file: db/changelog/changes/003-add-selected-text.yaml
+  - include:
+      file: db/changelog/changes/004-add-status-updated-by.yaml

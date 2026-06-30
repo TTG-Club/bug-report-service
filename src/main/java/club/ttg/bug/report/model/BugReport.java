@@ -87,6 +87,12 @@ public class BugReport {
     private String statusComment;
 
     /**
+     * Логин пользователя, который последним изменил статус.
+     */
+    @Column(name = "status_updated_by")
+    private String statusUpdatedBy;
+
+    /**
      * Выделенный текст на странице.
      */
     @Column(name = "selected_text", length = 5000)
