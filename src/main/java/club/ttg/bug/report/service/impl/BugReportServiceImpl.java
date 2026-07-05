@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -136,11 +137,23 @@ public class BugReportServiceImpl implements BugReportService {
         long totalCount = bugReportRepository.count();
         long fixedCount = bugReportRepository.countByStatusFixed();
 
-        List<Object[]> topFixersRaw = bugReportRepository.findTop10UsersByFixedBugs(PageRequest.of(0, 10));
-        List<UserFixedCountResponse> topFixers = topFixersRaw.stream()
+        List<UserFixedCountResponse> topFixers = toUserFixedCounts(
+                bugReportRepository.findTop10UsersByFixedBugs(PageRequest.of(0, 10)));
+
+        // Границы текущего календарного месяца: [первое число 00:00, первое число следующего месяца 00:00)
+        LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime nextMonthStart = monthStart.plusMonths(1);
+
+        long fixedCountThisMonth = bugReportRepository.countFixedCreatedBetween(monthStart, nextMonthStart);
+        List<UserFixedCountResponse> topFixersThisMonth = toUserFixedCounts(
+                bugReportRepository.findTopUsersByFixedBugsCreatedBetween(monthStart, nextMonthStart, PageRequest.of(0, 10)));
+
+        return new BugReportStatsResponse(totalCount, fixedCount, topFixers, fixedCountThisMonth, topFixersThisMonth);
+    }
+
+    private List<UserFixedCountResponse> toUserFixedCounts(List<Object[]> rows) {
+        return rows.stream()
                 .map(row -> new UserFixedCountResponse((String) row[0], (Long) row[1]))
                 .toList();
-
-        return new BugReportStatsResponse(totalCount, fixedCount, topFixers);
     }
 }

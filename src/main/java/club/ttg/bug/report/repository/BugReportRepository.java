@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,6 +53,20 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
      */
     @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.userLogin IS NOT NULL GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
     List<Object[]> findTop10UsersByFixedBugs(Pageable pageable);
+
+    /**
+     * Подсчёт решённых (FIXED) баг-репортов, созданных в заданном диапазоне дат.
+     * Диапазон полуоткрытый: [from, to).
+     */
+    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.createdAt >= :from AND b.createdAt < :to")
+    long countFixedCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /**
+     * Топ пользователей по количеству решённых багов, созданных в заданном диапазоне дат.
+     * Диапазон полуоткрытый: [from, to). Возвращает только пользователей с непустым логином.
+     */
+    @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.userLogin IS NOT NULL AND b.createdAt >= :from AND b.createdAt < :to GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
+    List<Object[]> findTopUsersByFixedBugsCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, Pageable pageable);
 
     /**
      * Поиск баг-репортов по логину пользователя с пагинацией.
