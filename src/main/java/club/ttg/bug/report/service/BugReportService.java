@@ -5,12 +5,15 @@ import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
+import club.ttg.bug.report.dto.MyBugReportResponse;
+import club.ttg.bug.report.dto.MyBugUpdatesResponse;
 import club.ttg.bug.report.model.BugStatus;
 import club.ttg.bug.report.model.SourcePlatform;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,13 +70,24 @@ public interface BugReportService {
     List<BugCountByStatusResponse> countByStatusForUser(String userLogin);
 
     /**
-     * Получение всех баг-репортов текущего пользователя с пагинацией.
+     * Получение баг-репортов текущего пользователя с пагинацией.
+     * Ответ не содержит данных о том, кто менял статус.
      *
      * @param userLogin логин пользователя
+     * @param status фильтр по статусу (может быть null)
      * @param pageable параметры пагинации
      * @return страница баг-репортов пользователя
      */
-    Page<BugReportResponse> getByUser(String userLogin, Pageable pageable);
+    Page<MyBugReportResponse> getByUser(String userLogin, BugStatus status, Pageable pageable);
+
+    /**
+     * Сводка изменений по баг-репортам пользователя для индикатора «есть новости».
+     *
+     * @param userLogin логин пользователя
+     * @param since отметка последнего просмотра (может быть null — тогда считаются все изменения)
+     * @return количество непросмотренных изменений и самая свежая дата изменения
+     */
+    MyBugUpdatesResponse getMyUpdates(String userLogin, LocalDateTime since);
 
     /**
      * Получение общей статистики по баг-репортам.

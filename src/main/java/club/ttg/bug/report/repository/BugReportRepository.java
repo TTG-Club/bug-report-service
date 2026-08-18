@@ -72,4 +72,30 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
      * Поиск баг-репортов по логину пользователя с пагинацией.
      */
     Page<BugReport> findByUserLogin(String userLogin, Pageable pageable);
+
+    /**
+     * Поиск баг-репортов пользователя с фильтром по статусу и пагинацией.
+     */
+    Page<BugReport> findByUserLoginAndStatus(String userLogin, BugStatus status, Pageable pageable);
+
+    /**
+     * Подсчёт всех баг-репортов пользователя, у которых менялся статус.
+     */
+    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.userLogin = :userLogin AND b.statusUpdatedAt IS NOT NULL")
+    long countStatusUpdatesForUser(@Param("userLogin") String userLogin);
+
+    /**
+     * Подсчёт баг-репортов пользователя, статус которых меняли позже отметки `since`.
+     * Вынесено в отдельный запрос, а не в условие `:since IS NULL`: Postgres не
+     * может вывести тип у параметра, сравниваемого только с NULL.
+     */
+    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.userLogin = :userLogin AND b.statusUpdatedAt > :since")
+    long countStatusUpdatesForUserSince(@Param("userLogin") String userLogin, @Param("since") LocalDateTime since);
+
+    /**
+     * Самая свежая дата изменения статуса среди баг-репортов пользователя.
+     * Возвращает `null`, если статус ни одного репорта ещё не меняли.
+     */
+    @Query("SELECT MAX(b.statusUpdatedAt) FROM BugReport b WHERE b.userLogin = :userLogin")
+    LocalDateTime findLastStatusUpdatedAtForUser(@Param("userLogin") String userLogin);
 }

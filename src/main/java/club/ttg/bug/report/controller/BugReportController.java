@@ -6,6 +6,8 @@ import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
 import club.ttg.bug.report.dto.BugStatusResponse;
+import club.ttg.bug.report.dto.MyBugReportResponse;
+import club.ttg.bug.report.dto.MyBugUpdatesResponse;
 import club.ttg.bug.report.model.BugStatus;
 import club.ttg.bug.report.model.SourcePlatform;
 import club.ttg.bug.report.ratelimit.RateLimiter;
@@ -18,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +33,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -195,20 +199,46 @@ public class BugReportController {
      * @param pageable параметры пагинации
      * @return страница баг-репортов пользователя
      */
-    @Operation(summary = "Мои баг-репорты", description = "Возвращает все баг-репорты текущего авторизованного пользователя с пагинацией. Требуется авторизация.")
+    @Operation(summary = "Мои баг-репорты", description = "Возвращает баг-репорты текущего авторизованного пользователя с пагинацией и необязательным фильтром по статусу. Ответ не содержит логина того, кто менял статус. Требуется авторизация.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Список баг-репортов пользователя"),
             @ApiResponse(responseCode = "401", description = "Не авторизован")
     })
     @GetMapping("/my")
-    public ResponseEntity<Page<BugReportResponse>> getMyBugs(
+    public ResponseEntity<Page<MyBugReportResponse>> getMyBugs(
             Authentication authentication,
+            @Parameter(description = "Фильтр по статусу") @RequestParam(required = false) BugStatus status,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
         String userLogin = resolveUserLogin(authentication);
         if (userLogin == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(bugReportService.getByUser(userLogin, pageable));
+        return ResponseEntity.ok(bugReportService.getByUser(userLogin, status, pageable));
+    }
+
+    /**
+     * Сводка изменений по баг-репортам текущего пользователя.
+     *
+     * @param authentication данные аутентификации
+     * @param since отметка последнего просмотра (может отсутствовать)
+     * @return количество непросмотренных изменений и самая свежая дата изменения
+     */
+    @Operation(summary = "Изменения по моим баг-репортам", description = "Возвращает количество баг-репортов пользователя, статус которых меняли позже переданной отметки, и самую свежую дату изменения статуса. Требуется авторизация.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Сводка изменений"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован")
+    })
+    @GetMapping("/my/updates")
+    public ResponseEntity<MyBugUpdatesResponse> getMyUpdates(
+            Authentication authentication,
+            @Parameter(description = "Отметка последнего просмотра")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+        String userLogin = resolveUserLogin(authentication);
+        if (userLogin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(bugReportService.getMyUpdates(userLogin, since));
     }
 
     /**

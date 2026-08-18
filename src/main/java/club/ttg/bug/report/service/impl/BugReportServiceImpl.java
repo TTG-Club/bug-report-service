@@ -5,6 +5,8 @@ import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
+import club.ttg.bug.report.dto.MyBugReportResponse;
+import club.ttg.bug.report.dto.MyBugUpdatesResponse;
 import club.ttg.bug.report.dto.UserFixedCountResponse;
 import club.ttg.bug.report.exception.BugReportNotFoundException;
 import club.ttg.bug.report.mapper.BugReportMapper;
@@ -126,9 +128,24 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BugReportResponse> getByUser(String userLogin, Pageable pageable) {
-        Page<BugReport> page = bugReportRepository.findByUserLogin(userLogin, pageable);
-        return page.map(bugReportMapper::toResponse);
+    public Page<MyBugReportResponse> getByUser(String userLogin, BugStatus status, Pageable pageable) {
+        Page<BugReport> page = status == null
+                ? bugReportRepository.findByUserLogin(userLogin, pageable)
+                : bugReportRepository.findByUserLoginAndStatus(userLogin, status, pageable);
+
+        return page.map(bugReportMapper::toMyResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MyBugUpdatesResponse getMyUpdates(String userLogin, LocalDateTime since) {
+        long count = since == null
+                ? bugReportRepository.countStatusUpdatesForUser(userLogin)
+                : bugReportRepository.countStatusUpdatesForUserSince(userLogin, since);
+
+        LocalDateTime lastStatusUpdatedAt = bugReportRepository.findLastStatusUpdatedAtForUser(userLogin);
+
+        return new MyBugUpdatesResponse(count, lastStatusUpdatedAt);
     }
 
     @Override

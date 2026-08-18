@@ -55,6 +55,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/statuses").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/stats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/*/screenshot").permitAll()
+                        // Свои баг-репорты доступны любому авторизованному пользователю.
+                        // Правило обязано стоять ДО общего "/api/v1/bugs/**": Spring берёт
+                        // первый совпавший матчер, иначе автор получит 403 на собственные баги.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bugs/my", "/api/v1/bugs/my/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs", "/api/v1/bugs/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/bugs/*/status").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
