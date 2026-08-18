@@ -2,6 +2,7 @@ package club.ttg.bug.report.mapper;
 
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
+import club.ttg.bug.report.dto.MyBugReportResponse;
 import club.ttg.bug.report.model.BugReport;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -21,6 +22,14 @@ public interface BugReportMapper {
      */
     @Mapping(target = "screenshotUrl", expression = "java(toScreenshotUrl(bugReport))")
     BugReportResponse toResponse(BugReport bugReport);
+
+    /**
+     * Преобразование сущности в DTO для автора репорта.
+     * Поля {@code statusUpdatedBy}, {@code userLogin} и {@code sessionId}
+     * в целевом DTO отсутствуют, поэтому в ответ автору они не попадают.
+     */
+    @Mapping(target = "screenshotUrl", expression = "java(toScreenshotUrl(bugReport))")
+    MyBugReportResponse toMyResponse(BugReport bugReport);
 
     default String toScreenshotUrl(BugReport bugReport) {
         if (bugReport == null || !StringUtils.hasText(bugReport.getScreenshotPath())) {
