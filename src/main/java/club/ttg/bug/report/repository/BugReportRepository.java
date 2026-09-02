@@ -2,10 +2,10 @@ package club.ttg.bug.report.repository;
 
 import club.ttg.bug.report.model.BugReport;
 import club.ttg.bug.report.model.BugStatus;
-import club.ttg.bug.report.model.SourcePlatform;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,22 +18,19 @@ import java.util.UUID;
  * Репозиторий для работы с баг-репортами.
  */
 @Repository
-public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
+public interface BugReportRepository extends JpaRepository<BugReport, UUID>, JpaSpecificationExecutor<BugReport> {
 
     /**
-     * Поиск баг-репортов по статусу.
+     * Логины авторов баг-репортов по алфавиту. Анонимные репорты (без логина) не учитываются.
      */
-    Page<BugReport> findByStatus(BugStatus status, Pageable pageable);
+    @Query("SELECT DISTINCT b.userLogin FROM BugReport b WHERE b.userLogin IS NOT NULL ORDER BY b.userLogin")
+    List<String> findDistinctUserLogins();
 
     /**
-     * Поиск баг-репортов по платформе-источнику.
+     * Логины пользователей, менявших статус баг-репортов, по алфавиту.
      */
-    Page<BugReport> findBySourcePlatform(SourcePlatform sourcePlatform, Pageable pageable);
-
-    /**
-     * Поиск баг-репортов по статусу и платформе.
-     */
-    Page<BugReport> findByStatusAndSourcePlatform(BugStatus status, SourcePlatform sourcePlatform, Pageable pageable);
+    @Query("SELECT DISTINCT b.statusUpdatedBy FROM BugReport b WHERE b.statusUpdatedBy IS NOT NULL ORDER BY b.statusUpdatedBy")
+    List<String> findDistinctStatusUpdatedBy();
 
     /**
      * Подсчёт количества багов по статусу для конкретного пользователя.

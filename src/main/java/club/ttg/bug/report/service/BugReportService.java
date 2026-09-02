@@ -1,6 +1,7 @@
 package club.ttg.bug.report.service;
 
 import club.ttg.bug.report.dto.BugCountByStatusResponse;
+import club.ttg.bug.report.dto.BugReportFilterOptionsResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
@@ -44,10 +45,20 @@ public interface BugReportService {
      *
      * @param status фильтр по статусу (может быть null)
      * @param sourcePlatform фильтр по платформе (может быть null)
+     * @param userLogin фильтр по логину автора (может быть null)
+     * @param statusUpdatedBy фильтр по логину пользователя, последним менявшего статус (может быть null)
      * @param pageable параметры пагинации
      * @return страница баг-репортов
      */
-    Page<BugReportResponse> getAll(BugStatus status, SourcePlatform sourcePlatform, Pageable pageable);
+    Page<BugReportResponse> getAll(BugStatus status, SourcePlatform sourcePlatform, String userLogin,
+                                   String statusUpdatedBy, Pageable pageable);
+
+    /**
+     * Значения для фильтров списка баг-репортов: логины авторов и тех, кто менял статус.
+     *
+     * @return списки логинов по алфавиту
+     */
+    BugReportFilterOptionsResponse getFilterOptions();
 
     /**
      * Обновление статуса баг-репорта.

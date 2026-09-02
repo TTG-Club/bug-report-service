@@ -2,6 +2,7 @@ package club.ttg.bug.report.service.impl;
 
 import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
+import club.ttg.bug.report.dto.BugReportFilterOptionsResponse;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.util.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,20 +73,47 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BugReportResponse> getAll(BugStatus status, SourcePlatform sourcePlatform, Pageable pageable) {
-        Page<BugReport> page;
+    public Page<BugReportResponse> getAll(BugStatus status, SourcePlatform sourcePlatform, String userLogin,
+                                          String statusUpdatedBy, Pageable pageable) {
+        Specification<BugReport> filter = Specification.allOf(
+                equalIfPresent("status", status),
+                equalIfPresent("sourcePlatform", sourcePlatform),
+                equalIfPresent("userLogin", blankToNull(userLogin)),
+                equalIfPresent("statusUpdatedBy", blankToNull(statusUpdatedBy))
+        );
 
-        if (status != null && sourcePlatform != null) {
-            page = bugReportRepository.findByStatusAndSourcePlatform(status, sourcePlatform, pageable);
-        } else if (status != null) {
-            page = bugReportRepository.findByStatus(status, pageable);
-        } else if (sourcePlatform != null) {
-            page = bugReportRepository.findBySourcePlatform(sourcePlatform, pageable);
-        } else {
-            page = bugReportRepository.findAll(pageable);
-        }
+        return bugReportRepository.findAll(filter, pageable).map(bugReportMapper::toResponse);
+    }
 
-        return page.map(bugReportMapper::toResponse);
+    @Override
+    @Transactional(readOnly = true)
+    public BugReportFilterOptionsResponse getFilterOptions() {
+        return new BugReportFilterOptionsResponse(
+                bugReportRepository.findDistinctUserLogins(),
+                bugReportRepository.findDistinctStatusUpdatedBy()
+        );
+    }
+
+    /**
+     * Условие «поле равно значению». Для null условие пропускается,
+     * поэтому незаданные фильтры не сужают выборку.
+     *
+     * @param field имя поля сущности
+     * @param value искомое значение (может быть null)
+     * @return спецификация с одним условием либо без условий
+     */
+    private static Specification<BugReport> equalIfPresent(String field, Object value) {
+        return (root, query, builder) -> value == null ? null : builder.equal(root.get(field), value);
+    }
+
+    /**
+     * Пустая строка из query-параметра (`?userLogin=`) означает «фильтр не задан».
+     *
+     * @param value значение параметра
+     * @return значение либо null, если оно пустое
+     */
+    private static String blankToNull(String value) {
+        return StringUtils.hasText(value) ? value : null;
     }
 
     @Override

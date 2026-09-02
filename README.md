@@ -133,7 +133,7 @@ Authorization: Bearer <token>
 ### Список баг-репортов
 
 ```http
-GET /api/v1/bugs?status=NEW&sourcePlatform=SITE_5E24&page=0&size=20
+GET /api/v1/bugs?status=NEW&sourcePlatform=SITE_5E24&userLogin=alice&statusUpdatedBy=bob&page=0&size=20
 Authorization: Bearer <token>
 ```
 
@@ -141,7 +141,22 @@ Authorization: Bearer <token>
 
 - `status`
 - `sourcePlatform`
+- `userLogin` — логин автора, точное совпадение
+- `statusUpdatedBy` — логин пользователя, последним менявшего статус, точное совпадение
 - стандартные параметры пагинации Spring Data: `page`, `size`, `sort`
+
+Требуется роль `ADMIN` или `MODERATOR`.
+
+### Значения для фильтров списка
+
+```http
+GET /api/v1/bugs/filter-options
+Authorization: Bearer <token>
+```
+
+Возвращает логины авторов баг-репортов (`userLogins`, без анонимов) и логины
+пользователей, менявших статус (`statusUpdatedByLogins`), по алфавиту — для
+выпадающих списков фильтров в админке.
 
 Требуется роль `ADMIN` или `MODERATOR`.
 
@@ -191,7 +206,7 @@ GET /api/v1/bugs/statuses
 ## Безопасность
 
 - `POST /api/v1/bugs` и `GET /api/v1/bugs/statuses` доступны без авторизации.
-- `GET /api/v1/bugs`, `GET /api/v1/bugs/{id}` и `PATCH /api/v1/bugs/{id}/status` защищены JWT.
+- `GET /api/v1/bugs`, `GET /api/v1/bugs/{id}`, `GET /api/v1/bugs/filter-options` и `PATCH /api/v1/bugs/{id}/status` защищены JWT.
 - Для защищенных эндпоинтов нужна роль `ADMIN` или `MODERATOR`.
 - JWT проверяется локально через `JwtDecoder`.
 - Имя пользователя берется из claim `username` или из `sub`.

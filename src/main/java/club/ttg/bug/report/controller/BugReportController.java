@@ -2,6 +2,7 @@ package club.ttg.bug.report.controller;
 
 import club.ttg.bug.report.dto.BugCountByStatusResponse;
 import club.ttg.bug.report.dto.BugReportCreateRequest;
+import club.ttg.bug.report.dto.BugReportFilterOptionsResponse;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
@@ -135,10 +136,12 @@ public class BugReportController {
      *
      * @param status фильтр по статусу
      * @param sourcePlatform фильтр по платформе
+     * @param userLogin фильтр по логину автора
+     * @param statusUpdatedBy фильтр по логину пользователя, последним менявшего статус
      * @param pageable параметры пагинации
      * @return страница баг-репортов
      */
-    @Operation(summary = "Список баг-репортов", description = "Возвращает список баг-репортов с фильтрацией по статусу и платформе. Поддерживает пагинацию. Требуется роль ADMIN или MODERATOR.")
+    @Operation(summary = "Список баг-репортов", description = "Возвращает список баг-репортов с фильтрацией по статусу, платформе, автору и пользователю, последним менявшему статус. Поддерживает пагинацию. Требуется роль ADMIN или MODERATOR.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Список баг-репортов"),
             @ApiResponse(responseCode = "401", description = "Не авторизован"),
@@ -149,8 +152,27 @@ public class BugReportController {
     public ResponseEntity<Page<BugReportResponse>> getAll(
             @Parameter(description = "Фильтр по статусу") @RequestParam(required = false) BugStatus status,
             @Parameter(description = "Фильтр по платформе-источнику") @RequestParam(required = false) SourcePlatform sourcePlatform,
+            @Parameter(description = "Фильтр по логину автора") @RequestParam(required = false) String userLogin,
+            @Parameter(description = "Фильтр по логину пользователя, последним менявшего статус") @RequestParam(required = false) String statusUpdatedBy,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(bugReportService.getAll(status, sourcePlatform, pageable));
+        return ResponseEntity.ok(bugReportService.getAll(status, sourcePlatform, userLogin, statusUpdatedBy, pageable));
+    }
+
+    /**
+     * Значения для фильтров списка баг-репортов.
+     *
+     * @return логины авторов и пользователей, менявших статус
+     */
+    @Operation(summary = "Значения для фильтров списка", description = "Возвращает логины авторов баг-репортов и логины пользователей, менявших статус, — для выпадающих списков фильтров в админке. Требуется роль ADMIN или MODERATOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Значения для фильтров"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Нет доступа")
+    })
+    @GetMapping("/filter-options")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public ResponseEntity<BugReportFilterOptionsResponse> getFilterOptions() {
+        return ResponseEntity.ok(bugReportService.getFilterOptions());
     }
 
     /**
