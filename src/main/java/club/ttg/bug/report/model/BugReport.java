@@ -98,6 +98,16 @@ public class BugReport {
     @Column(name = "selected_text", length = 5000)
     private String selectedText;
 
+    /**
+     * Снимок метрик производительности на момент отправки (JSON).
+     * <p>
+     * Формат задаёт платформа-источник и версионирует его полем {@code v}:
+     * сервис содержимое не разбирает и не валидирует, а хранит и отдаёт как
+     * есть — разбирает его тот, кто репорт показывает.
+     */
+    @Column(columnDefinition = "TEXT")
+    private String diagnostics;
+
     @PrePersist
     public void prePersist() {
         if (status == null) {

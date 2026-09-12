@@ -92,4 +92,10 @@ public class BugReportResponse {
      */
     @Schema(description = "Выделенный текст на странице", example = "Текст, который пользователь выделил при создании баг-репорта")
     private String selectedText;
+
+    /**
+     * Снимок метрик производительности на момент отправки.
+     */
+    @Schema(description = "Снимок метрик производительности на момент отправки (JSON, формат задаёт платформа-источник)", example = "{\"v\":1,\"client\":{\"fps\":28}}")
+    private String diagnostics;
 }

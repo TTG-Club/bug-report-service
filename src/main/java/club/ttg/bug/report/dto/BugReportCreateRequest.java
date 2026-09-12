@@ -48,4 +48,11 @@ public class BugReportCreateRequest {
     @Size(max = 5000, message = "Выделенный текст не должен превышать 5000 символов")
     @Schema(description = "Выделенный текст на странице", example = "Текст, который пользователь выделил при создании баг-репорта")
     private String selectedText;
+
+    /**
+     * Снимок метрик производительности на момент отправки (JSON).
+     */
+    @Size(max = 20000, message = "Снимок производительности не должен превышать 20000 символов")
+    @Schema(description = "Снимок метрик производительности на момент отправки (JSON, формат задаёт платформа-источник)", example = "{\"v\":1,\"client\":{\"fps\":28}}")
+    private String diagnostics;
 }

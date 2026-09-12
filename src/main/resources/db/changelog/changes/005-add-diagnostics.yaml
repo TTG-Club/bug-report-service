@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-diagnostics
+      author: bugtracker
+      changes:
+        - addColumn:
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: diagnostics
+                  type: TEXT
+                  constraints:
+                    nullable: true
