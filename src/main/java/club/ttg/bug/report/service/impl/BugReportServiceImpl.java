@@ -6,6 +6,7 @@ import club.ttg.bug.report.dto.BugReportFilterOptionsResponse;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
+import club.ttg.bug.report.dto.BugReportUpdateTypeRequest;
 import club.ttg.bug.report.dto.MyBugReportResponse;
 import club.ttg.bug.report.dto.MyBugUpdatesResponse;
 import club.ttg.bug.report.dto.UserFixedCountResponse;
@@ -13,6 +14,7 @@ import club.ttg.bug.report.exception.BugReportNotFoundException;
 import club.ttg.bug.report.mapper.BugReportMapper;
 import club.ttg.bug.report.model.BugReport;
 import club.ttg.bug.report.model.BugStatus;
+import club.ttg.bug.report.model.ReportType;
 import club.ttg.bug.report.model.SourcePlatform;
 import club.ttg.bug.report.repository.BugReportRepository;
 import club.ttg.bug.report.service.BugReportService;
@@ -74,9 +76,10 @@ public class BugReportServiceImpl implements BugReportService {
     @Override
     @Transactional(readOnly = true)
     public Page<BugReportResponse> getAll(BugStatus status, SourcePlatform sourcePlatform, String userLogin,
-                                          String statusUpdatedBy, Pageable pageable) {
+                                          String statusUpdatedBy, ReportType type, Pageable pageable) {
         Specification<BugReport> filter = Specification.allOf(
                 equalIfPresent("status", status),
+                equalIfPresent("type", type),
                 equalIfPresent("sourcePlatform", sourcePlatform),
                 equalIfPresent("userLogin", blankToNull(userLogin)),
                 equalIfPresent("statusUpdatedBy", blankToNull(statusUpdatedBy))
@@ -87,10 +90,17 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public BugReportFilterOptionsResponse getFilterOptions() {
+    public BugReportFilterOptionsResponse getFilterOptions(ReportType type) {
+        if (type == null) {
+            return new BugReportFilterOptionsResponse(
+                    bugReportRepository.findDistinctUserLogins(),
+                    bugReportRepository.findDistinctStatusUpdatedBy()
+            );
+        }
+
         return new BugReportFilterOptionsResponse(
-                bugReportRepository.findDistinctUserLogins(),
-                bugReportRepository.findDistinctStatusUpdatedBy()
+                bugReportRepository.findDistinctUserLoginsByType(type),
+                bugReportRepository.findDistinctStatusUpdatedByByType(type)
         );
     }
 
@@ -134,6 +144,21 @@ public class BugReportServiceImpl implements BugReportService {
     }
 
     @Override
+    @Transactional
+    public BugReportResponse updateType(UUID id, BugReportUpdateTypeRequest request) {
+        BugReport bugReport = bugReportRepository.findById(id)
+                .orElseThrow(() -> new BugReportNotFoundException("Баг-репорт не найден: " + id));
+
+        // Статус и statusUpdatedAt/By/Comment намеренно не трогаем: смена типа —
+        // не ответ автору, индикатор «вам ответили» загораться не должен.
+        bugReport.setType(request.getType());
+        BugReport updated = bugReportRepository.save(bugReport);
+        log.info("Изменён тип баг-репорта: id={}, newType={}", id, request.getType());
+
+        return bugReportMapper.toResponse(updated);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public StoredFile getScreenshot(UUID id) {
         BugReport bugReport = bugReportRepository.findById(id)
@@ -148,8 +173,10 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BugCountByStatusResponse> countByStatusForUser(String userLogin) {
-        List<Object[]> results = bugReportRepository.countByStatusForUser(userLogin);
+    public List<BugCountByStatusResponse> countByStatusForUser(String userLogin, ReportType type) {
+        List<Object[]> results = type == null
+                ? bugReportRepository.countByStatusForUser(userLogin)
+                : bugReportRepository.countByStatusForUserAndType(userLogin, type);
         return results.stream()
                 .map(row -> new BugCountByStatusResponse((BugStatus) row[0], (Long) row[1]))
                 .toList();
@@ -157,12 +184,14 @@ public class BugReportServiceImpl implements BugReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MyBugReportResponse> getByUser(String userLogin, BugStatus status, Pageable pageable) {
-        Page<BugReport> page = status == null
-                ? bugReportRepository.findByUserLogin(userLogin, pageable)
-                : bugReportRepository.findByUserLoginAndStatus(userLogin, status, pageable);
+    public Page<MyBugReportResponse> getByUser(String userLogin, BugStatus status, ReportType type, Pageable pageable) {
+        Specification<BugReport> filter = Specification.allOf(
+                equalIfPresent("userLogin", userLogin),
+                equalIfPresent("status", status),
+                equalIfPresent("type", type)
+        );
 
-        return page.map(bugReportMapper::toMyResponse);
+        return bugReportRepository.findAll(filter, pageable).map(bugReportMapper::toMyResponse);
     }
 
     @Override
@@ -180,7 +209,8 @@ public class BugReportServiceImpl implements BugReportService {
     @Override
     @Transactional(readOnly = true)
     public BugReportStatsResponse getStats() {
-        long totalCount = bugReportRepository.count();
+        // Только баги: пожелания в публичную статистику не попадают
+        long totalCount = bugReportRepository.countByType(ReportType.BUG);
         long fixedCount = bugReportRepository.countByStatusFixed();
 
         List<UserFixedCountResponse> topFixers = toUserFixedCounts(

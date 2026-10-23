@@ -43,6 +43,13 @@ public class BugReport {
     private BugStatus status;
 
     /**
+     * Тип записи: баг или пожелание.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 20)
+    private ReportType type;
+
+    /**
      * Платформа-источник.
      */
     @Enumerated(EnumType.STRING)
@@ -112,6 +119,9 @@ public class BugReport {
     public void prePersist() {
         if (status == null) {
             status = BugStatus.NEW;
+        }
+        if (type == null) {
+            type = ReportType.BUG;
         }
     }
 }

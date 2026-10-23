@@ -6,10 +6,13 @@ import club.ttg.bug.report.dto.BugReportFilterOptionsResponse;
 import club.ttg.bug.report.dto.BugReportResponse;
 import club.ttg.bug.report.dto.BugReportStatsResponse;
 import club.ttg.bug.report.dto.BugReportUpdateStatusRequest;
+import club.ttg.bug.report.dto.BugReportUpdateTypeRequest;
 import club.ttg.bug.report.dto.BugStatusResponse;
 import club.ttg.bug.report.dto.MyBugReportResponse;
 import club.ttg.bug.report.dto.MyBugUpdatesResponse;
+import club.ttg.bug.report.dto.ReportTypeResponse;
 import club.ttg.bug.report.model.BugStatus;
+import club.ttg.bug.report.model.ReportType;
 import club.ttg.bug.report.model.SourcePlatform;
 import club.ttg.bug.report.ratelimit.RateLimiter;
 import club.ttg.bug.report.service.BugReportService;
@@ -138,10 +141,11 @@ public class BugReportController {
      * @param sourcePlatform фильтр по платформе
      * @param userLogin фильтр по логину автора
      * @param statusUpdatedBy фильтр по логину пользователя, последним менявшего статус
+     * @param type фильтр по типу записи
      * @param pageable параметры пагинации
      * @return страница баг-репортов
      */
-    @Operation(summary = "Список баг-репортов", description = "Возвращает список баг-репортов с фильтрацией по статусу, платформе, автору и пользователю, последним менявшему статус. Поддерживает пагинацию. Требуется роль ADMIN или MODERATOR.")
+    @Operation(summary = "Список баг-репортов", description = "Возвращает список баг-репортов с фильтрацией по статусу, платформе, автору, пользователю, последним менявшему статус, и типу записи (баг или пожелание; без параметра — все типы). Поддерживает пагинацию. Требуется роль ADMIN или MODERATOR.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Список баг-репортов"),
             @ApiResponse(responseCode = "401", description = "Не авторизован"),
@@ -154,16 +158,18 @@ public class BugReportController {
             @Parameter(description = "Фильтр по платформе-источнику") @RequestParam(required = false) SourcePlatform sourcePlatform,
             @Parameter(description = "Фильтр по логину автора") @RequestParam(required = false) String userLogin,
             @Parameter(description = "Фильтр по логину пользователя, последним менявшего статус") @RequestParam(required = false) String statusUpdatedBy,
+            @Parameter(description = "Фильтр по типу записи: BUG или WISH. Без параметра — все типы") @RequestParam(required = false) ReportType type,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(bugReportService.getAll(status, sourcePlatform, userLogin, statusUpdatedBy, pageable));
+        return ResponseEntity.ok(bugReportService.getAll(status, sourcePlatform, userLogin, statusUpdatedBy, type, pageable));
     }
 
     /**
      * Значения для фильтров списка баг-репортов.
      *
+     * @param type тип записи (без параметра — все типы)
      * @return логины авторов и пользователей, менявших статус
      */
-    @Operation(summary = "Значения для фильтров списка", description = "Возвращает логины авторов баг-репортов и логины пользователей, менявших статус, — для выпадающих списков фильтров в админке. Требуется роль ADMIN или MODERATOR.")
+    @Operation(summary = "Значения для фильтров списка", description = "Возвращает логины авторов баг-репортов и логины пользователей, менявших статус, — для выпадающих списков фильтров в админке. Необязательный параметр type сужает выборку до одного типа записи. Требуется роль ADMIN или MODERATOR.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Значения для фильтров"),
             @ApiResponse(responseCode = "401", description = "Не авторизован"),
@@ -171,8 +177,9 @@ public class BugReportController {
     })
     @GetMapping("/filter-options")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<BugReportFilterOptionsResponse> getFilterOptions() {
-        return ResponseEntity.ok(bugReportService.getFilterOptions());
+    public ResponseEntity<BugReportFilterOptionsResponse> getFilterOptions(
+            @Parameter(description = "Фильтр по типу записи: BUG или WISH. Без параметра — все типы") @RequestParam(required = false) ReportType type) {
+        return ResponseEntity.ok(bugReportService.getFilterOptions(type));
     }
 
     /**
@@ -200,6 +207,30 @@ public class BugReportController {
     }
 
     /**
+     * Смена типа записи (баг или пожелание).
+     * Статус и данные о его изменении не меняются, поэтому автор не получает уведомления.
+     *
+     * @param id идентификатор записи
+     * @param request новый тип
+     * @return обновлённая запись
+     */
+    @Operation(summary = "Смена типа записи", description = "Переводит запись в баг или в пожелание. Статус, дата и автор изменения статуса и комментарий не меняются. Требуется роль ADMIN или MODERATOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Тип изменён"),
+            @ApiResponse(responseCode = "404", description = "Баг-репорт не найден"),
+            @ApiResponse(responseCode = "400", description = "Ошибка валидации"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Нет доступа")
+    })
+    @PatchMapping("/{id}/type")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public ResponseEntity<BugReportResponse> updateType(
+            @Parameter(description = "UUID баг-репорта") @PathVariable UUID id,
+            @Valid @RequestBody BugReportUpdateTypeRequest request) {
+        return ResponseEntity.ok(bugReportService.updateType(id, request));
+    }
+
+    /**
      * Получение списка доступных статусов баг-репорта.
      *
      * @return список статусов с русскими названиями
@@ -215,13 +246,28 @@ public class BugReportController {
     }
 
     /**
+     * Получение списка типов записей (баг или пожелание).
+     *
+     * @return список типов с русскими названиями
+     */
+    @Operation(summary = "Список типов записей", description = "Возвращает все типы записей (баг, пожелание) с русскими названиями. Доступен без авторизации.")
+    @ApiResponse(responseCode = "200", description = "Список типов")
+    @GetMapping("/types")
+    public ResponseEntity<List<ReportTypeResponse>> getTypes() {
+        List<ReportTypeResponse> types = Arrays.stream(ReportType.values())
+                .map(t -> new ReportTypeResponse(t.name(), t.getName()))
+                .toList();
+        return ResponseEntity.ok(types);
+    }
+
+    /**
      * Получение всех баг-репортов текущего пользователя.
      *
      * @param authentication данные аутентификации
      * @param pageable параметры пагинации
      * @return страница баг-репортов пользователя
      */
-    @Operation(summary = "Мои баг-репорты", description = "Возвращает баг-репорты текущего авторизованного пользователя с пагинацией и необязательным фильтром по статусу. Ответ не содержит логина того, кто менял статус. Требуется авторизация.")
+    @Operation(summary = "Мои баг-репорты", description = "Возвращает баг-репорты текущего авторизованного пользователя с пагинацией и необязательными фильтрами по статусу и типу записи (без type — все типы). Ответ не содержит логина того, кто менял статус. Требуется авторизация.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Список баг-репортов пользователя"),
             @ApiResponse(responseCode = "401", description = "Не авторизован")
@@ -230,12 +276,13 @@ public class BugReportController {
     public ResponseEntity<Page<MyBugReportResponse>> getMyBugs(
             Authentication authentication,
             @Parameter(description = "Фильтр по статусу") @RequestParam(required = false) BugStatus status,
+            @Parameter(description = "Фильтр по типу записи: BUG или WISH. Без параметра — все типы") @RequestParam(required = false) ReportType type,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
         String userLogin = resolveUserLogin(authentication);
         if (userLogin == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(bugReportService.getByUser(userLogin, status, pageable));
+        return ResponseEntity.ok(bugReportService.getByUser(userLogin, status, type, pageable));
     }
 
     /**
@@ -267,28 +314,32 @@ public class BugReportController {
      * Получение количества багов для текущего пользователя с группировкой по статусу.
      *
      * @param authentication данные аутентификации
+     * @param type фильтр по типу записи (без параметра — все типы)
      * @return список количества багов по статусам
      */
-    @Operation(summary = "Количество багов по статусу", description = "Возвращает количество багов текущего пользователя с группировкой по статусу. Требуется авторизация.")
+    @Operation(summary = "Количество багов по статусу", description = "Возвращает количество записей текущего пользователя с группировкой по статусу. Необязательный параметр type сужает подсчёт до одного типа записи (без него — все типы). Требуется авторизация.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Количество багов по статусам"),
             @ApiResponse(responseCode = "401", description = "Не авторизован")
     })
     @GetMapping("/my/count-by-status")
-    public ResponseEntity<List<BugCountByStatusResponse>> countByStatusForCurrentUser(Authentication authentication) {
+    public ResponseEntity<List<BugCountByStatusResponse>> countByStatusForCurrentUser(
+            Authentication authentication,
+            @Parameter(description = "Фильтр по типу записи: BUG или WISH. Без параметра — все типы") @RequestParam(required = false) ReportType type) {
         String userLogin = resolveUserLogin(authentication);
         if (userLogin == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(bugReportService.countByStatusForUser(userLogin));
+        return ResponseEntity.ok(bugReportService.countByStatusForUser(userLogin, type));
     }
 
     /**
      * Получение общей статистики по баг-репортам.
+     * Учитываются только баги, пожелания не учитываются.
      *
      * @return статистика: общее количество, решённые, топ-10 пользователей
      */
-    @Operation(summary = "Статистика по баг-репортам", description = "Возвращает общее количество багов, количество решённых, топ-10 пользователей по решённым багам за всё время, а также количество решённых и топ-10 пользователей за текущий календарный месяц. Доступен без авторизации.")
+    @Operation(summary = "Статистика по баг-репортам", description = "Возвращает общее количество багов, количество решённых, топ-10 пользователей по решённым багам за всё время, а также количество решённых и топ-10 пользователей за текущий календарный месяц. Учитываются только баги, пожелания не учитываются. Доступен без авторизации.")
     @ApiResponse(responseCode = "200", description = "Статистика получена")
     @GetMapping("/stats")
     public ResponseEntity<BugReportStatsResponse> getStats() {

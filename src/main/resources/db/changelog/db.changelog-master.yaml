@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/004-add-status-updated-by.yaml
   - include:
       file: db/changelog/changes/005-add-diagnostics.yaml
+  - include:
+      file: db/changelog/changes/006-add-report-type.yaml

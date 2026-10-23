@@ -2,6 +2,7 @@ package club.ttg.bug.report.repository;
 
 import club.ttg.bug.report.model.BugReport;
 import club.ttg.bug.report.model.BugStatus;
+import club.ttg.bug.report.model.ReportType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,10 +28,22 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID>, Jpa
     List<String> findDistinctUserLogins();
 
     /**
+     * Логины авторов записей заданного типа по алфавиту. Анонимные репорты (без логина) не учитываются.
+     */
+    @Query("SELECT DISTINCT b.userLogin FROM BugReport b WHERE b.userLogin IS NOT NULL AND b.type = :type ORDER BY b.userLogin")
+    List<String> findDistinctUserLoginsByType(@Param("type") ReportType type);
+
+    /**
      * Логины пользователей, менявших статус баг-репортов, по алфавиту.
      */
     @Query("SELECT DISTINCT b.statusUpdatedBy FROM BugReport b WHERE b.statusUpdatedBy IS NOT NULL ORDER BY b.statusUpdatedBy")
     List<String> findDistinctStatusUpdatedBy();
+
+    /**
+     * Логины пользователей, менявших статус записей заданного типа, по алфавиту.
+     */
+    @Query("SELECT DISTINCT b.statusUpdatedBy FROM BugReport b WHERE b.statusUpdatedBy IS NOT NULL AND b.type = :type ORDER BY b.statusUpdatedBy")
+    List<String> findDistinctStatusUpdatedByByType(@Param("type") ReportType type);
 
     /**
      * Подсчёт количества багов по статусу для конкретного пользователя.
@@ -39,30 +52,43 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID>, Jpa
     List<Object[]> countByStatusForUser(@Param("userLogin") String userLogin);
 
     /**
-     * Подсчёт количества решённых (FIXED) баг-репортов.
+     * Подсчёт количества записей заданного типа по статусу для конкретного пользователя.
      */
-    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.status = 'FIXED'")
+    @Query("SELECT b.status, COUNT(b) FROM BugReport b WHERE b.userLogin = :userLogin AND b.type = :type GROUP BY b.status")
+    List<Object[]> countByStatusForUserAndType(@Param("userLogin") String userLogin, @Param("type") ReportType type);
+
+    /**
+     * Подсчёт записей заданного типа.
+     */
+    long countByType(ReportType type);
+
+    /**
+     * Подсчёт количества решённых (FIXED) багов. Пожелания не учитываются.
+     */
+    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.type = 'BUG' AND b.status = 'FIXED'")
     long countByStatusFixed();
 
     /**
      * Топ-10 зарегистрированных пользователей по количеству решённых багов.
      * Возвращает только пользователей с непустым логином (зарегистрированных).
+     * Пожелания не учитываются.
      */
-    @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.userLogin IS NOT NULL GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
+    @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.type = 'BUG' AND b.status = 'FIXED' AND b.userLogin IS NOT NULL GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
     List<Object[]> findTop10UsersByFixedBugs(Pageable pageable);
 
     /**
      * Подсчёт решённых (FIXED) баг-репортов, созданных в заданном диапазоне дат.
-     * Диапазон полуоткрытый: [from, to).
+     * Диапазон полуоткрытый: [from, to). Пожелания не учитываются.
      */
-    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.createdAt >= :from AND b.createdAt < :to")
+    @Query("SELECT COUNT(b) FROM BugReport b WHERE b.type = 'BUG' AND b.status = 'FIXED' AND b.createdAt >= :from AND b.createdAt < :to")
     long countFixedCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     /**
      * Топ пользователей по количеству решённых багов, созданных в заданном диапазоне дат.
      * Диапазон полуоткрытый: [from, to). Возвращает только пользователей с непустым логином.
+     * Пожелания не учитываются.
      */
-    @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.status = 'FIXED' AND b.userLogin IS NOT NULL AND b.createdAt >= :from AND b.createdAt < :to GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
+    @Query("SELECT b.userLogin, COUNT(b) FROM BugReport b WHERE b.type = 'BUG' AND b.status = 'FIXED' AND b.userLogin IS NOT NULL AND b.createdAt >= :from AND b.createdAt < :to GROUP BY b.userLogin ORDER BY COUNT(b) DESC")
     List<Object[]> findTopUsersByFixedBugsCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, Pageable pageable);
 
     /**

@@ -13,10 +13,10 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Статистика по баг-репортам")
+@Schema(description = "Статистика по баг-репортам. Учитываются только баги, пожелания не учитываются")
 public class BugReportStatsResponse {
 
-    @Schema(description = "Общее количество баг-репортов", example = "150")
+    @Schema(description = "Общее количество багов (без пожеланий)", example = "150")
     private long totalCount;
 
     @Schema(description = "Количество решённых баг-репортов (статус FIXED)", example = "42")

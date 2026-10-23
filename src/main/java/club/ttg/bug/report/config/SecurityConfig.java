@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/bugs").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/statuses").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bugs/types").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/stats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/*/screenshot").permitAll()
                         // Свои баг-репорты доступны любому авторизованному пользователю.
@@ -61,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/my", "/api/v1/bugs/my/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs", "/api/v1/bugs/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/bugs/*/status").hasAnyRole("ADMIN", "MODERATOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/bugs/*/type").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

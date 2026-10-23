@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-report-type
+      author: bugtracker
+      changes:
+        - addColumn:
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: type
+                  type: VARCHAR(20)
+                  defaultValue: BUG
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_bug_reports_type_status
+            tableName: bug_reports
+            columns:
+              - column:
+                  name: type
+              - column:
+                  name: status

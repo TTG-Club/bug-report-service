@@ -1,5 +1,6 @@
 package club.ttg.bug.report.dto;
 
+import club.ttg.bug.report.model.ReportType;
 import club.ttg.bug.report.model.SourcePlatform;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -35,6 +36,12 @@ public class BugReportCreateRequest {
     @NotNull(message = "Платформа-источник обязательна")
     @Schema(description = "Платформа-источник бага", example = "SITE_5E24", requiredMode = Schema.RequiredMode.REQUIRED)
     private SourcePlatform sourcePlatform;
+
+    /**
+     * Тип записи: баг или пожелание. Если не передан — баг.
+     */
+    @Schema(description = "Тип записи: баг или пожелание. Необязательное поле, по умолчанию BUG", example = "BUG")
+    private ReportType type;
 
     /**
      * Идентификатор сессии (если не авторизован).

@@ -1,6 +1,7 @@
 package club.ttg.bug.report.dto;
 
 import club.ttg.bug.report.model.BugStatus;
+import club.ttg.bug.report.model.ReportType;
 import club.ttg.bug.report.model.SourcePlatform;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -42,6 +43,12 @@ public class MyBugReportResponse {
      */
     @Schema(description = "Текущий статус бага", example = "NEW")
     private BugStatus status;
+
+    /**
+     * Тип записи: баг или пожелание.
+     */
+    @Schema(description = "Тип записи: баг или пожелание", example = "BUG")
+    private ReportType type;
 
     /**
      * Платформа-источник.
