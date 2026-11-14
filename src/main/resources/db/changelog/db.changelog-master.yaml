@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-add-diagnostics.yaml
   - include:
       file: db/changelog/changes/006-add-report-type.yaml
+  - include:
+      file: db/changelog/changes/007-add-page-url-history.yaml

@@ -43,6 +43,16 @@ CREATE DATABASE bug;
 | `SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY` | Access key для S3 |
 | `SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY` | Secret key для S3 |
 
+Перенос адресов страниц в репортах после смены адреса записи каталога в core-api
+(`/spells/fireball-phb` → `/spells/fireball-ph`). Раз в 10 минут сервис забирает новые
+смены из `GET {core-api}/api/internal/url-history` и переписывает адреса в репортах.
+
+| Переменная | Описание |
+| --- | --- |
+| `INTERNAL_SERVICE_SECRET` | Общий секрет сервисов (`X-Service-Token`), тот же, что `internal.service-secret` в core-api. Пустой — перенос выключен |
+| `CORE_API_URL` | Адрес core-api, по умолчанию `http://core-api:8080` |
+| `URL_HISTORY_SYNC_INTERVAL` | Период синхронизации, по умолчанию `PT10M` |
+
 Основные настройки лежат в [application.yaml](src/main/resources/application.yaml).
 
 ## Запуск

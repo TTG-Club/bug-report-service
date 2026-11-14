@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-add-page-url-history
+      author: bugtracker
+      comment: >
+        Локальная копия прежних адресов записей каталога из core-api
+        (раздел + прежний адрес → текущий). По ней переносятся адреса
+        страниц в баг-репортах; максимальный changed_at — курсор синхронизации.
+      changes:
+        - createTable:
+            tableName: page_url_history
+            columns:
+              - column:
+                  name: section
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: old_slug
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: new_slug
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: changed_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: page_url_history
+            columnNames: section, old_slug
+            constraintName: pk_page_url_history

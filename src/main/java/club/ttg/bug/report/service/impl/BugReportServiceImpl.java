@@ -20,6 +20,7 @@ import club.ttg.bug.report.repository.BugReportRepository;
 import club.ttg.bug.report.service.BugReportService;
 import club.ttg.bug.report.service.FileStorageService;
 import club.ttg.bug.report.service.StoredFile;
+import club.ttg.bug.report.urlhistory.PageUrlMigrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -47,12 +48,15 @@ public class BugReportServiceImpl implements BugReportService {
     private final BugReportRepository bugReportRepository;
     private final BugReportMapper bugReportMapper;
     private final FileStorageService fileStorageService;
+    private final PageUrlMigrationService pageUrlMigrationService;
 
     @Override
     @Transactional
     public BugReportResponse create(BugReportCreateRequest request, MultipartFile screenshot, String userLogin) {
         BugReport bugReport = bugReportMapper.toEntity(request);
         bugReport.setUserLogin(userLogin);
+        // Репорт могли отправить со старой ссылки на запись каталога — храним текущий адрес.
+        bugReport.setUrl(pageUrlMigrationService.currentUrl(bugReport.getUrl()));
 
         if (screenshot != null && !screenshot.isEmpty()) {
             String key = fileStorageService.store(screenshot);

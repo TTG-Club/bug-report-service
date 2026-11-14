@@ -31,6 +31,21 @@ spring:
 server:
   port: 8080
 
+# Общий секрет межсервисных вызовов (заголовок X-Service-Token).
+# Пустой — перенос адресов страниц из core-api выключен.
+internal:
+  service-secret: ${INTERNAL_SERVICE_SECRET:}
+
+core-api:
+  base-url: ${CORE_API_URL:http://core-api:8080}
+  connect-timeout: ${CORE_API_CONNECT_TIMEOUT:2s}
+  read-timeout: ${CORE_API_READ_TIMEOUT:30s}
+  # Перенос адресов страниц в репортах после смены адреса записи каталога.
+  url-history:
+    sync-interval: ${URL_HISTORY_SYNC_INTERVAL:PT10M}
+    initial-delay: PT1M
+    overlap: PT1H
+
 # Настройки приложения
 app:
   cors:

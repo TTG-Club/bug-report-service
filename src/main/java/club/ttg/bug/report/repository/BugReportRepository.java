@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -121,4 +122,26 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID>, Jpa
      */
     @Query("SELECT MAX(b.statusUpdatedAt) FROM BugReport b WHERE b.userLogin = :userLogin")
     LocalDateTime findLastStatusUpdatedAtForUser(@Param("userLogin") String userLogin);
+
+    /**
+     * Адреса страниц всех репортов, где адрес указан (для переноса на новые адреса записей).
+     */
+    @Query("SELECT b.id AS id, b.url AS url FROM BugReport b WHERE b.url IS NOT NULL")
+    List<BugReportUrl> findAllWithUrl();
+
+    /**
+     * Замена адреса страницы репорта.
+     */
+    @Modifying
+    @Query("UPDATE BugReport b SET b.url = :url WHERE b.id = :id")
+    int updateUrl(@Param("id") UUID id, @Param("url") String url);
+
+    /**
+     * Идентификатор и адрес страницы репорта.
+     */
+    interface BugReportUrl {
+        UUID getId();
+
+        String getUrl();
+    }
 }
