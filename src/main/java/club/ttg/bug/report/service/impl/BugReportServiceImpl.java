@@ -11,6 +11,7 @@ import club.ttg.bug.report.dto.MyBugReportResponse;
 import club.ttg.bug.report.dto.MyBugUpdatesResponse;
 import club.ttg.bug.report.dto.UserFixedCountResponse;
 import club.ttg.bug.report.exception.BugReportNotFoundException;
+import club.ttg.bug.report.exception.BugReportNotWithdrawableException;
 import club.ttg.bug.report.mapper.BugReportMapper;
 import club.ttg.bug.report.model.BugReport;
 import club.ttg.bug.report.model.BugStatus;
@@ -30,6 +31,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -173,6 +176,55 @@ public class BugReportServiceImpl implements BugReportService {
         }
 
         return fileStorageService.get(bugReport.getScreenshotPath());
+    }
+
+    @Override
+    @Transactional
+    public void withdrawByAuthor(UUID id, String userLogin) {
+        // Чужую или анонимную запись отвечаем как несуществующую — не раскрываем, что id есть.
+        BugReport bugReport = bugReportRepository.findById(id)
+                .filter(bug -> userLogin != null && userLogin.equals(bug.getUserLogin()))
+                .orElseThrow(() -> new BugReportNotFoundException("Баг-репорт не найден: " + id));
+
+        if (bugReport.getStatus() != BugStatus.NEW) {
+            throw new BugReportNotWithdrawableException("Баг-репорт уже взят в работу, отозвать его нельзя");
+        }
+
+        String screenshotPath = bugReport.getScreenshotPath();
+        bugReportRepository.delete(bugReport);
+        log.info("Баг-репорт {} отозван автором {}", id, userLogin);
+
+        if (StringUtils.hasText(screenshotPath)) {
+            deleteScreenshotAfterCommit(screenshotPath);
+        }
+    }
+
+    /**
+     * Удаляет скриншот только после коммита: если удаление строки откатится, файл останется.
+     * Ошибка хранилища не роняет ответ — осиротевший файл не страшнее упавшего запроса.
+     *
+     * @param screenshotPath ключ скриншота в хранилище
+     */
+    private void deleteScreenshotAfterCommit(String screenshotPath) {
+        Runnable deleteScreenshot = () -> {
+            try {
+                fileStorageService.delete(screenshotPath);
+            } catch (RuntimeException e) {
+                log.warn("Не удалось удалить скриншот {} отозванного баг-репорта", screenshotPath, e);
+            }
+        };
+
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deleteScreenshot.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deleteScreenshot.run();
+            }
+        });
     }
 
     @Override

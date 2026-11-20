@@ -25,6 +25,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(BugReportNotWithdrawableException.class)
+    public ResponseEntity<Map<String, Object>> handleNotWithdrawable(BugReportNotWithdrawableException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<Map<String, Object>> handleRateLimit(RateLimitExceededException ex) {
         return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());

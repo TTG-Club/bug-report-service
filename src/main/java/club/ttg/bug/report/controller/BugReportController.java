@@ -334,6 +334,33 @@ public class BugReportController {
     }
 
     /**
+     * Отзыв своего баг-репорта автором, пока запись не взяли в работу (статус NEW).
+     * Запись удаляется насовсем. Лимит частоты создания при этом не возвращается.
+     *
+     * @param id идентификатор записи
+     * @param authentication данные аутентификации
+     * @return пустой ответ 204
+     */
+    @Operation(summary = "Отзыв своего баг-репорта", description = "Удаляет запись текущего пользователя, пока её статус NEW. Чужая или несуществующая запись — 404, запись уже в работе — 409. Роли не важны: удалить можно только свою запись. Требуется авторизация.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Баг-репорт отозван"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "404", description = "Баг-репорт не найден или принадлежит другому пользователю"),
+            @ApiResponse(responseCode = "409", description = "Баг-репорт уже взят в работу")
+    })
+    @DeleteMapping("/my/{id}")
+    public ResponseEntity<Void> withdrawMyBug(
+            @Parameter(description = "UUID баг-репорта") @PathVariable UUID id,
+            Authentication authentication) {
+        String userLogin = resolveUserLogin(authentication);
+        if (userLogin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        bugReportService.withdrawByAuthor(id, userLogin);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Получение общей статистики по баг-репортам.
      * Учитываются только баги, пожелания не учитываются.
      *

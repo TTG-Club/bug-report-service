@@ -16,6 +16,7 @@ import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -117,6 +118,31 @@ public class FileStorageServiceImpl implements FileStorageService {
             throw new FileStorageException("S3 download failed for key: " + normalizedKey, e);
         } catch (SdkException e) {
             throw new FileStorageException("Failed to download file from S3: " + normalizedKey, e);
+        }
+    }
+
+    @Override
+    public void delete(String key) {
+        String normalizedKey = normalizeKey(key);
+
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(s3Properties.bucket())
+                    .key(normalizedKey)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+            log.info("Файл удалён из S3: {}", normalizedKey);
+        } catch (NoSuchKeyException e) {
+            log.debug("Файла уже нет в S3: {}", normalizedKey);
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                log.debug("Файла уже нет в S3: {}", normalizedKey);
+                return;
+            }
+            throw new FileStorageException("S3 delete failed for key: " + normalizedKey, e);
+        } catch (SdkException e) {
+            throw new FileStorageException("Failed to delete file from S3: " + normalizedKey, e);
         }
     }
 

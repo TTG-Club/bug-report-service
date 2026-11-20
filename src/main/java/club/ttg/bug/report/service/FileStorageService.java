@@ -22,4 +22,11 @@ public interface FileStorageService {
      * @return содержимое файла
      */
     StoredFile get(String key);
+
+    /**
+     * Удаление файла из S3. Отсутствие файла ошибкой не считается.
+     *
+     * @param key ключ файла в бакете
+     */
+    void delete(String key);
 }

@@ -5,13 +5,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -60,11 +63,18 @@ public class SecurityConfig {
                         // Правило обязано стоять ДО общего "/api/v1/bugs/**": Spring берёт
                         // первый совпавший матчер, иначе автор получит 403 на собственные баги.
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs/my", "/api/v1/bugs/my/**").authenticated()
+                        // Отзыв своей записи — тоже любому авторизованному и тоже до общих правил.
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/bugs/my/*").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bugs", "/api/v1/bugs/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/bugs/*/status").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/bugs/*/type").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
                 )
+                // Без токена ручка отзыва отвечает 401 (контракт сайта), остальные ручки — как раньше.
+                .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, "/api/v1/bugs/my/*")
+                ))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

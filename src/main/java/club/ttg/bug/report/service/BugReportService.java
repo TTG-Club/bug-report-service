@@ -87,6 +87,17 @@ public interface BugReportService {
     StoredFile getScreenshot(UUID id);
 
     /**
+     * Отзыв записи её автором: только своя и только в статусе NEW.
+     * Запись удаляется насовсем, скриншот — из хранилища после коммита транзакции.
+     *
+     * @param id идентификатор записи
+     * @param userLogin логин текущего пользователя
+     * @throws club.ttg.bug.report.exception.BugReportNotFoundException записи нет или она чужая
+     * @throws club.ttg.bug.report.exception.BugReportNotWithdrawableException статус уже не NEW
+     */
+    void withdrawByAuthor(UUID id, String userLogin);
+
+    /**
      * Получение количества багов для пользователя с группировкой по статусу.
      *
      * @param userLogin логин пользователя
