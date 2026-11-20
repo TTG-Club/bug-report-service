@@ -218,6 +218,7 @@ GET /api/v1/bugs/statuses
 - `POST /api/v1/bugs` и `GET /api/v1/bugs/statuses` доступны без авторизации.
 - `GET /api/v1/bugs`, `GET /api/v1/bugs/{id}`, `GET /api/v1/bugs/filter-options` и `PATCH /api/v1/bugs/{id}/status` защищены JWT.
 - Для защищенных эндпоинтов нужна роль `ADMIN` или `MODERATOR`.
+- `DELETE /api/v1/bugs/my/{id}` (отзыв своей записи в статусе `NEW`) доступен любому авторизованному пользователю; без токена отвечает `401`, остальные защищенные эндпоинты без токена отвечают `403`.
 - JWT проверяется локально через `JwtDecoder`.
 - Имя пользователя берется из claim `username` или из `sub`.
 - Роли берутся из claim `roles` или `authorities`; префикс `ROLE_` поддерживается.

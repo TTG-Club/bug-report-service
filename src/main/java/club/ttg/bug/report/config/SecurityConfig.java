@@ -12,9 +12,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -70,11 +72,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/bugs/*/type").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
                 )
-                // Без токена ручка отзыва отвечает 401 (контракт сайта), остальные ручки — как раньше.
-                .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
-                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, "/api/v1/bugs/my/*")
-                ))
+                // Без токена ручка отзыва отвечает 401 (контракт сайта), остальные ручки — 403, как раньше.
+                // Второе правило обязательно: единственный зарегистрированный entry point Spring
+                // применяет ко ВСЕМ запросам, и 401 получили бы все защищённые ручки.
+                .exceptionHandling(exceptions -> exceptions
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, "/api/v1/bugs/my/*"))
+                        .defaultAuthenticationEntryPointFor(
+                                new Http403ForbiddenEntryPoint(),
+                                AnyRequestMatcher.INSTANCE))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

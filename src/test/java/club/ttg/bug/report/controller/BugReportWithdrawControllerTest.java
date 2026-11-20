@@ -28,6 +28,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -72,6 +74,19 @@ class BugReportWithdrawControllerTest {
     void withoutTokenIsUnauthorized() throws Exception {
         mockMvc.perform(delete("/api/v1/bugs/my/{id}", UUID.randomUUID()))
                 .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(bugReportService);
+    }
+
+    @Test
+    void otherProtectedEndpointsWithoutTokenStayForbidden() throws Exception {
+        // 401 настроен только для отзыва; остальные защищённые ручки без токена отвечают 403, как раньше.
+        mockMvc.perform(get("/api/v1/bugs"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/bugs/my"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(patch("/api/v1/bugs/{id}/status", UUID.randomUUID()))
+                .andExpect(status().isForbidden());
 
         verifyNoInteractions(bugReportService);
     }

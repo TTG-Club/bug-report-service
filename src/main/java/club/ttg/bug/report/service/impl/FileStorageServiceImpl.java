@@ -136,10 +136,15 @@ public class FileStorageServiceImpl implements FileStorageService {
         } catch (NoSuchKeyException e) {
             log.debug("Файла уже нет в S3: {}", normalizedKey);
         } catch (S3Exception e) {
-            if (e.statusCode() == 404) {
-                log.debug("Файла уже нет в S3: {}", normalizedKey);
-                return;
-            }
+            // Любой 404, кроме NoSuchKey (например, NoSuchBucket), — ошибка настройки, а не «файла уже нет».
+            log.error(
+                    "S3 delete failed for key '{}': status={}, requestId={}, errorCode={}, errorMessage={}",
+                    normalizedKey,
+                    e.statusCode(),
+                    e.requestId(),
+                    e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null,
+                    e.awsErrorDetails() != null ? e.awsErrorDetails().errorMessage() : null
+            );
             throw new FileStorageException("S3 delete failed for key: " + normalizedKey, e);
         } catch (SdkException e) {
             throw new FileStorageException("Failed to delete file from S3: " + normalizedKey, e);

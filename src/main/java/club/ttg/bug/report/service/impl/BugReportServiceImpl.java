@@ -192,7 +192,7 @@ public class BugReportServiceImpl implements BugReportService {
 
         String screenshotPath = bugReport.getScreenshotPath();
         bugReportRepository.delete(bugReport);
-        log.info("Баг-репорт {} отозван автором {}", id, userLogin);
+        log.info("Отозван баг-репорт: id={}, author={}", id, userLogin);
 
         if (StringUtils.hasText(screenshotPath)) {
             deleteScreenshotAfterCommit(screenshotPath);
